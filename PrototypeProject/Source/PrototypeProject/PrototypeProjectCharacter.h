@@ -14,6 +14,9 @@ class APrototypeProjectCharacter : public ACharacter
 public:
 	APrototypeProjectCharacter();
 
+	UPROPERTY(BlueprintReadWrite, Category = Stat)
+	float PushingPower;
+
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -25,6 +28,8 @@ public:
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
 private:
+
+
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;

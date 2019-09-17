@@ -6,6 +6,7 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "PrototypeProjectCharacter.h"
 #include "Engine/World.h"
+#include "DummyAICharacter.h"
 
 APrototypeProjectPlayerController::APrototypeProjectPlayerController()
 {
@@ -30,6 +31,7 @@ void APrototypeProjectPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	InputComponent->BindAction("SetDestination", IE_Pressed, this, &APrototypeProjectPlayerController::OnSetDestinationPressed);
+	InputComponent->BindAction("Charging", IE_Pressed, this, &APrototypeProjectPlayerController::ChargingAttack);
 	InputComponent->BindAction("SetDestination", IE_Released, this, &APrototypeProjectPlayerController::OnSetDestinationReleased);
 
 	InputComponent->BindAxis("MoveForward", this, &APrototypeProjectPlayerController::MoveForward);
@@ -102,10 +104,64 @@ void APrototypeProjectPlayerController::SetNewMoveDestination(const FVector Dest
 	}
 }
 
+void APrototypeProjectPlayerController::ChargingAttack()
+{
+	FHitResult result;
+	FCollisionQueryParams params;
+	FCollisionShape shape;
+	shape.ShapeType = ECollisionShape::Type::Box;
+	shape.Box.HalfExtentX = 50.f;
+	shape.Box.HalfExtentY = 50.f;
+	shape.Box.HalfExtentZ = 50.f;
+	params.AddIgnoredActor(GetPawn());
+
+	APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn());
+
+
+	if (GetWorld()->SweepSingleByChannel(result, GetPawn()->GetActorLocation(), GetPawn()->GetActorLocation() + 200.f * GetPawn()->GetActorForwardVector(), FQuat::Identity,
+		ECollisionChannel::ECC_Pawn, shape, params))
+	{
+		ADummyAICharacter* character = Cast<ADummyAICharacter>(result.GetActor());
+		if (character == nullptr)
+			return;
+
+		UCharacterMovementComponent* movement = Cast<UCharacterMovementComponent>(character->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
+		if (movement == nullptr)
+			return;
+
+		movement->Velocity += (character->GetActorLocation() - GetPawn()->GetActorLocation()) * MyPawn->PushingPower * character->HitCount;
+		character->HitCount = 0;
+	}
+}
+
 void APrototypeProjectPlayerController::OnSetDestinationPressed()
 {
 	// set flag to keep updating destination until released
 	bMoveToMouseCursor = true;
+	
+	FHitResult result;
+	FCollisionQueryParams params;
+	FCollisionShape shape;
+	shape.ShapeType = ECollisionShape::Type::Box;
+	shape.Box.HalfExtentX = 50.f;
+	shape.Box.HalfExtentY = 50.f;
+	shape.Box.HalfExtentZ = 50.f;
+	params.AddIgnoredActor(GetPawn());
+
+	APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn());
+
+
+	if (GetWorld()->SweepSingleByChannel(result, GetPawn()->GetActorLocation(), GetPawn()->GetActorLocation() + 200.f * GetPawn()->GetActorForwardVector(), FQuat::Identity,
+		ECollisionChannel::ECC_Pawn, shape, params))
+	{
+		ADummyAICharacter* character = Cast<ADummyAICharacter>(result.GetActor());
+		if (character == nullptr)
+			return;
+
+		if(character->HitCount <= 10)
+			character->HitCount++;
+	}
+
 }
 
 void APrototypeProjectPlayerController::OnSetDestinationReleased()
@@ -118,7 +174,7 @@ void APrototypeProjectPlayerController::MoveForward(float delta)
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		MyPawn->GetCharacterMovement()->AddInputVector(MyPawn->GetActorRotation().RotateVector(FVector(delta, 0.f, 0.f)));
+		MyPawn->GetCharacterMovement()->AddInputVector(FVector(delta, 0.f, 0.f));
 	}
 }
 
@@ -126,6 +182,6 @@ void APrototypeProjectPlayerController::MoveRight(float delta)
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		MyPawn->GetCharacterMovement()->AddInputVector(MyPawn->GetActorRotation().RotateVector(FVector(0.f, delta, 0.f)));
+		MyPawn->GetCharacterMovement()->AddInputVector(FVector(0.f, delta, 0.f));
 	}
 }

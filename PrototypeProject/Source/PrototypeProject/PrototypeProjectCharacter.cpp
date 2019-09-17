@@ -55,6 +55,9 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+
+	PushingPower = 5.f;
 }
 
 void APrototypeProjectCharacter::Tick(float DeltaSeconds)
