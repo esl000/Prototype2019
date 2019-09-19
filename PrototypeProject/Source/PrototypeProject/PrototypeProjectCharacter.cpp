@@ -57,7 +57,12 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 
-	PushingPower = 5.f;
+	PushingPower = 10.f;
+
+	LookDirection = FVector::ForwardVector;
+	DestLookDirection = FVector::ForwardVector;
+	FocusYaw = 0.f;
+	SpineRotationYaw = 0.f;
 }
 
 void APrototypeProjectCharacter::Tick(float DeltaSeconds)
@@ -78,7 +83,7 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 				World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
 				FQuat SurfaceRotation = HitResult.ImpactNormal.ToOrientationRotator().Quaternion();
 				CursorToWorld->SetWorldLocationAndRotation(HitResult.Location, SurfaceRotation);
-				SetActorRotation((HitResult.Location - GetActorLocation()).GetSafeNormal2D().Rotation());
+				DestLookDirection = (HitResult.Location - GetActorLocation()).GetSafeNormal2D();
 			}
 		}
 		else if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -89,7 +94,26 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 			FRotator CursorR = CursorFV.Rotation();
 			CursorToWorld->SetWorldLocation(TraceHitResult.Location);
 			CursorToWorld->SetWorldRotation(CursorR);
-			SetActorRotation((TraceHitResult.Location - GetActorLocation()).GetSafeNormal2D().Rotation());
+			DestLookDirection = (TraceHitResult.Location - GetActorLocation()).GetSafeNormal2D();
 		}
+	}
+
+	FRotator focus = LookDirection.ToOrientationRotator();
+
+	LookDirection = FMath::RInterpTo(focus, DestLookDirection.ToOrientationRotator(), DeltaSeconds, 0.2f).Vector();
+
+	FRotator delta = focus - GetActorRotation();
+	float rotationHalf = 360.f - GetActorRotation().Yaw;
+	float deltaYaw = /*deltaYaw = delta.Yaw > rotationHalf ? delta.Yaw - 360.f : */delta.Yaw;
+
+	if (FMath::Abs(deltaYaw) > 90.f)
+	{
+		FocusYaw = (deltaYaw / FMath::Abs(deltaYaw)) * 90.f;
+		SpineRotationYaw = (deltaYaw / FMath::Abs(deltaYaw)) * (FMath::Abs(deltaYaw) - 90.f);
+	}
+	else
+	{
+		FocusYaw = deltaYaw;
+		SpineRotationYaw = 0.f;
 	}
 }

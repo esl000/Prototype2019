@@ -7,6 +7,7 @@
 #include "PrototypeProjectCharacter.h"
 #include "Engine/World.h"
 #include "DummyAICharacter.h"
+#include "PrototypeProject.h"
 
 APrototypeProjectPlayerController::APrototypeProjectPlayerController()
 {
@@ -106,6 +107,7 @@ void APrototypeProjectPlayerController::SetNewMoveDestination(const FVector Dest
 
 void APrototypeProjectPlayerController::ChargingAttack()
 {
+	UE_LOG(LogPrototypeProject, Warning, TEXT("press charging"));
 	FHitResult result;
 	FCollisionQueryParams params;
 	FCollisionShape shape;
@@ -128,6 +130,8 @@ void APrototypeProjectPlayerController::ChargingAttack()
 		UCharacterMovementComponent* movement = Cast<UCharacterMovementComponent>(character->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
 		if (movement == nullptr)
 			return;
+
+		UE_LOG(LogPrototypeProject, Warning, TEXT("show charging"));
 
 		movement->Velocity += (character->GetActorLocation() - GetPawn()->GetActorLocation()) * MyPawn->PushingPower * character->HitCount;
 		character->HitCount = 0;
@@ -157,6 +161,8 @@ void APrototypeProjectPlayerController::OnSetDestinationPressed()
 		ADummyAICharacter* character = Cast<ADummyAICharacter>(result.GetActor());
 		if (character == nullptr)
 			return;
+
+		UE_LOG(LogPrototypeProject, Warning, TEXT("add hitcount"));
 
 		if(character->HitCount <= 10)
 			character->HitCount++;

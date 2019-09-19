@@ -14,8 +14,16 @@ class APrototypeProjectCharacter : public ACharacter
 public:
 	APrototypeProjectCharacter();
 
-	UPROPERTY(BlueprintReadWrite, Category = Stat)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
 	float PushingPower;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
+	FVector LookDirection;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
+	float FocusYaw;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
+	float SpineRotationYaw;
+
+	FVector DestLookDirection;
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
