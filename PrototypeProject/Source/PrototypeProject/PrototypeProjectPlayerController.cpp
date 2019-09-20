@@ -107,34 +107,15 @@ void APrototypeProjectPlayerController::SetNewMoveDestination(const FVector Dest
 
 void APrototypeProjectPlayerController::ChargingAttack()
 {
-	UE_LOG(LogPrototypeProject, Warning, TEXT("press charging"));
-	FHitResult result;
-	FCollisionQueryParams params;
-	FCollisionShape shape;
-	shape.ShapeType = ECollisionShape::Type::Box;
-	shape.Box.HalfExtentX = 50.f;
-	shape.Box.HalfExtentY = 50.f;
-	shape.Box.HalfExtentZ = 50.f;
-	params.AddIgnoredActor(GetPawn());
-
-	APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn());
-
-
-	if (GetWorld()->SweepSingleByChannel(result, GetPawn()->GetActorLocation(), GetPawn()->GetActorLocation() + 200.f * GetPawn()->GetActorForwardVector(), FQuat::Identity,
-		ECollisionChannel::ECC_Pawn, shape, params))
+	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		ADummyAICharacter* character = Cast<ADummyAICharacter>(result.GetActor());
-		if (character == nullptr)
+		if (MyPawn->CurrentState == EAnimationState::E_HIT || MyPawn->CurrentState == EAnimationState::E_ATTACK)
 			return;
 
-		UCharacterMovementComponent* movement = Cast<UCharacterMovementComponent>(character->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
-		if (movement == nullptr)
-			return;
+		if (MyPawn->CurrentState != EAnimationState::E_CHARGING)
+			MyPawn->SetActorRotation(MyPawn->DestLookDirection.ToOrientationRotator());
 
-		UE_LOG(LogPrototypeProject, Warning, TEXT("show charging"));
-
-		movement->Velocity += (character->GetActorLocation() - GetPawn()->GetActorLocation()) * MyPawn->PushingPower * character->HitCount;
-		character->HitCount = 0;
+		MyPawn->CurrentState = EAnimationState::E_CHARGING;
 	}
 }
 
@@ -142,32 +123,17 @@ void APrototypeProjectPlayerController::OnSetDestinationPressed()
 {
 	// set flag to keep updating destination until released
 	bMoveToMouseCursor = true;
-	
-	FHitResult result;
-	FCollisionQueryParams params;
-	FCollisionShape shape;
-	shape.ShapeType = ECollisionShape::Type::Box;
-	shape.Box.HalfExtentX = 50.f;
-	shape.Box.HalfExtentY = 50.f;
-	shape.Box.HalfExtentZ = 50.f;
-	params.AddIgnoredActor(GetPawn());
 
-	APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn());
-
-
-	if (GetWorld()->SweepSingleByChannel(result, GetPawn()->GetActorLocation(), GetPawn()->GetActorLocation() + 200.f * GetPawn()->GetActorForwardVector(), FQuat::Identity,
-		ECollisionChannel::ECC_Pawn, shape, params))
+	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		ADummyAICharacter* character = Cast<ADummyAICharacter>(result.GetActor());
-		if (character == nullptr)
+		if (MyPawn->CurrentState == EAnimationState::E_HIT || MyPawn->CurrentState == EAnimationState::E_CHARGING)
 			return;
 
-		UE_LOG(LogPrototypeProject, Warning, TEXT("add hitcount"));
+		if (MyPawn->CurrentState != EAnimationState::E_ATTACK)
+			MyPawn->SetActorRotation(MyPawn->DestLookDirection.ToOrientationRotator());
 
-		if(character->HitCount <= 10)
-			character->HitCount++;
+		MyPawn->CurrentState = EAnimationState::E_ATTACK;
 	}
-
 }
 
 void APrototypeProjectPlayerController::OnSetDestinationReleased()
@@ -180,7 +146,11 @@ void APrototypeProjectPlayerController::MoveForward(float delta)
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		MyPawn->GetCharacterMovement()->AddInputVector(FVector(delta, 0.f, 0.f));
+		if (MyPawn->CurrentState == EAnimationState::E_IDLE || MyPawn->CurrentState == EAnimationState::E_MOVE)
+		{
+			MyPawn->GetCharacterMovement()->AddInputVector(FVector(delta, 0.f, 0.f));
+			MyPawn->CurrentState = EAnimationState::E_MOVE;
+		}
 	}
 }
 
@@ -188,6 +158,10 @@ void APrototypeProjectPlayerController::MoveRight(float delta)
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		MyPawn->GetCharacterMovement()->AddInputVector(FVector(0.f, delta, 0.f));
+		if (MyPawn->CurrentState == EAnimationState::E_IDLE || MyPawn->CurrentState == EAnimationState::E_MOVE)
+		{
+			MyPawn->GetCharacterMovement()->AddInputVector(FVector(0.f, delta, 0.f));
+			MyPawn->CurrentState = EAnimationState::E_MOVE;
+		}
 	}
 }

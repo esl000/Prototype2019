@@ -5,3 +5,9 @@
 #include "CoreMinimal.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPrototypeProject, Log, All);
+
+
+inline float GetPositiveAngle(float angle)
+{
+	return angle < 0.f ? 360.f - angle : angle;
+}

@@ -6,6 +6,16 @@
 #include "GameFramework/Character.h"
 #include "PrototypeProjectCharacter.generated.h"
 
+UENUM(Blueprintable)
+enum class EAnimationState : uint8 
+{
+	E_ATTACK,
+	E_CHARGING,
+	E_MOVE,
+	E_IDLE,
+	E_HIT
+};
+
 UCLASS(Blueprintable)
 class APrototypeProjectCharacter : public ACharacter
 {
@@ -22,6 +32,8 @@ public:
 	float FocusYaw;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
 	float SpineRotationYaw;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
+	EAnimationState CurrentState;
 
 	FVector DestLookDirection;
 
@@ -34,6 +46,11 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
+
+	UFUNCTION(BlueprintCallable)
+	void Attack();
+	UFUNCTION(BlueprintCallable)
+	void Charge();
 
 private:
 

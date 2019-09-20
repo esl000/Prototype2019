@@ -21,7 +21,7 @@ protected:
 
 public:	
 
-	UPROPERTY(EditAnywhere, Category = Stat)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
 	int HitCount;
 
 

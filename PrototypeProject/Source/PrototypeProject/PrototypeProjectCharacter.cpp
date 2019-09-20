@@ -11,6 +11,8 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "PrototypeProject.h"
+#include "DummyAICharacter.h"
 
 APrototypeProjectCharacter::APrototypeProjectCharacter()
 {
@@ -63,6 +65,8 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	DestLookDirection = FVector::ForwardVector;
 	FocusYaw = 0.f;
 	SpineRotationYaw = 0.f;
+
+	CurrentState = EAnimationState::E_IDLE;
 }
 
 void APrototypeProjectCharacter::Tick(float DeltaSeconds)
@@ -98,22 +102,140 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 		}
 	}
 
-	FRotator focus = LookDirection.ToOrientationRotator();
+	float focusYaw = LookDirection.ToOrientationRotator().Yaw;
+	float RotationYaw = GetActorRotation().Yaw;
 
-	LookDirection = FMath::RInterpTo(focus, DestLookDirection.ToOrientationRotator(), DeltaSeconds, 0.2f).Vector();
+	if (focusYaw < 0.f)
+		focusYaw += 360.f;
 
-	FRotator delta = focus - GetActorRotation();
-	float rotationHalf = 360.f - GetActorRotation().Yaw;
-	float deltaYaw = /*deltaYaw = delta.Yaw > rotationHalf ? delta.Yaw - 360.f : */delta.Yaw;
+	if (focusYaw < RotationYaw)
+		focusYaw += 360.f;
 
-	if (FMath::Abs(deltaYaw) > 90.f)
+	if (focusYaw > RotationYaw + 180.f)
 	{
-		FocusYaw = (deltaYaw / FMath::Abs(deltaYaw)) * 90.f;
-		SpineRotationYaw = (deltaYaw / FMath::Abs(deltaYaw)) * (FMath::Abs(deltaYaw) - 90.f);
+		focusYaw = focusYaw - 360.f;
+	}
+
+	focusYaw -= RotationYaw;
+
+
+	if (RotationYaw < 0.f)
+		RotationYaw += 360.f;
+
+
+
+	float destYaw = DestLookDirection.ToOrientationRotator().Yaw;
+
+	if (destYaw < 0.f)
+		destYaw += 360.f;
+
+	if (destYaw < RotationYaw)
+		destYaw += 360.f;
+
+	if (destYaw > RotationYaw + 180.f)
+	{
+		destYaw = destYaw - 360.f;
+	}
+
+	destYaw -= RotationYaw;
+
+
+
+	focusYaw = FMath::Lerp(focusYaw, destYaw, 3.f * DeltaSeconds);
+	float worldDestYaw = focusYaw + RotationYaw;
+	LookDirection = FRotator(0.f, worldDestYaw, 0.f).Vector();
+
+	UE_LOG(LogPrototypeProject, Warning, TEXT("%f, %f"), destYaw, focusYaw);
+
+	if (FMath::Abs(focusYaw) > 90.f)
+	{
+		FocusYaw = (focusYaw / FMath::Abs(focusYaw)) * 90.f;
+		SpineRotationYaw = (focusYaw / FMath::Abs(focusYaw)) * (FMath::Abs(focusYaw) - 90.f);
 	}
 	else
 	{
-		FocusYaw = deltaYaw;
+		FocusYaw = focusYaw;
 		SpineRotationYaw = 0.f;
+	}
+
+
+	//FRotator focus = LookDirection.ToOrientationRotator();
+
+	//LookDirection = FMath::RInterpTo(focus, DestLookDirection.ToOrientationRotator(), DeltaSeconds, 3.f).Vector();
+	////FMath::RInterp
+
+	//FRotator delta = focus - GetActorRotation();
+	//float rotationHalf = 360.f - GetActorRotation().Yaw;
+	//float deltaYaw = /*deltaYaw = delta.Yaw > rotationHalf ? delta.Yaw - 360.f : */delta.Yaw;
+
+	//if (FMath::Abs(deltaYaw) > 90.f)
+	//{
+	//	FocusYaw = (deltaYaw / FMath::Abs(deltaYaw)) * 90.f;
+	//	SpineRotationYaw = (deltaYaw / FMath::Abs(deltaYaw)) * (FMath::Abs(deltaYaw) - 90.f);
+	//}
+	//else
+	//{
+	//	FocusYaw = deltaYaw;
+	//	SpineRotationYaw = 0.f;
+	//}
+}
+
+void APrototypeProjectCharacter::Attack()
+{
+	TArray<FHitResult> result;
+	FCollisionQueryParams params;
+	FCollisionShape shape;
+	shape.ShapeType = ECollisionShape::Type::Box;
+	shape.Box.HalfExtentX = 50.f;
+	shape.Box.HalfExtentY = 50.f;
+	shape.Box.HalfExtentZ = 50.f;
+	params.AddIgnoredActor(this);
+
+
+
+	if (GetWorld()->SweepMultiByChannel(result, GetActorLocation(), GetActorLocation() + 200.f * GetActorForwardVector(), FQuat::Identity,
+		ECollisionChannel::ECC_Pawn, shape, params))
+	{
+		for (int i = 0; i < result.Num(); ++i)
+		{
+			ADummyAICharacter* character = Cast<ADummyAICharacter>(result[i].GetActor());
+			if (character == nullptr)
+				return;
+
+			character->HitCount++;
+		}
+	}
+}
+
+void APrototypeProjectCharacter::Charge()
+{
+	TArray<FHitResult> result;
+	FCollisionQueryParams params;
+	FCollisionShape shape;
+	shape.ShapeType = ECollisionShape::Type::Box;
+	shape.Box.HalfExtentX = 50.f;
+	shape.Box.HalfExtentY = 50.f;
+	shape.Box.HalfExtentZ = 50.f;
+	params.AddIgnoredActor(this);
+
+
+
+	if (GetWorld()->SweepMultiByChannel(result, GetActorLocation(), GetActorLocation() + 200.f * GetActorForwardVector(), FQuat::Identity,
+		ECollisionChannel::ECC_Pawn, shape, params))
+	{
+		for (int i = 0; i < result.Num(); ++i)
+		{
+			ADummyAICharacter* character = Cast<ADummyAICharacter>(result[i].GetActor());
+			if (character == nullptr)
+				return;
+
+			UCharacterMovementComponent* movement = Cast<UCharacterMovementComponent>(character->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
+			if (movement == nullptr)
+				return;
+
+			movement->StopActiveMovement();
+			movement->Velocity += (character->GetActorLocation() - GetActorLocation()) * PushingPower * character->HitCount;
+			character->HitCount = 0;
+		}
 	}
 }
