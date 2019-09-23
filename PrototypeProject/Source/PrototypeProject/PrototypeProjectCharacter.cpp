@@ -67,6 +67,9 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	SpineRotationYaw = 0.f;
 
 	CurrentState = EAnimationState::E_IDLE;
+
+	CurrentAttackCount = 0;
+	IgnoreAttackAnim = false;
 }
 
 void APrototypeProjectCharacter::Tick(float DeltaSeconds)
@@ -145,8 +148,6 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 	float worldDestYaw = focusYaw + RotationYaw;
 	LookDirection = FRotator(0.f, worldDestYaw, 0.f).Vector();
 
-	UE_LOG(LogPrototypeProject, Warning, TEXT("%f, %f"), destYaw, focusYaw);
-
 	if (FMath::Abs(focusYaw) > 90.f)
 	{
 		FocusYaw = (focusYaw / FMath::Abs(focusYaw)) * 90.f;
@@ -203,6 +204,14 @@ void APrototypeProjectCharacter::Attack()
 				return;
 
 			character->HitCount++;
+			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+
+			UE_LOG(LogPrototypeProject, Warning, TEXT("%f, %f, %f"), particleDir.X, particleDir.Y,
+				particleDir.Z);
+
+			GetWorld()->SpawnActor<AActor>(Particle, 
+				result[i].ImpactPoint,
+				particleDir.ToOrientationRotator());
 		}
 	}
 }
@@ -234,8 +243,13 @@ void APrototypeProjectCharacter::Charge()
 				return;
 
 			movement->StopActiveMovement();
-			movement->Velocity += (character->GetActorLocation() - GetActorLocation()) * PushingPower * character->HitCount;
+			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+			movement->Velocity += particleDir * PushingPower * character->HitCount;
 			character->HitCount = 0;
+
+			GetWorld()->SpawnActor<AActor>(Particle,
+				result[i].ImpactPoint,
+				particleDir.ToOrientationRotator());
 		}
 	}
 }

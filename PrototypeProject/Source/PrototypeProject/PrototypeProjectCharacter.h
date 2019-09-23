@@ -35,7 +35,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
 	EAnimationState CurrentState;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effects)
+	TSubclassOf<AActor> Particle;
+
 	FVector DestLookDirection;
+
+	int CurrentAttackCount;
+	UPROPERTY(BlueprintReadWrite, Category = Stat)
+	bool IgnoreAttackAnim;
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;

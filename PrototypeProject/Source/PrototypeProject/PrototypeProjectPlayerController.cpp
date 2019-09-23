@@ -130,7 +130,16 @@ void APrototypeProjectPlayerController::OnSetDestinationPressed()
 			return;
 
 		if (MyPawn->CurrentState != EAnimationState::E_ATTACK)
+		{
 			MyPawn->SetActorRotation(MyPawn->DestLookDirection.ToOrientationRotator());
+			MyPawn->CurrentAttackCount = 1;
+		}
+		else
+		{
+			MyPawn->CurrentAttackCount++;
+			if(MyPawn->CurrentAttackCount <= 3)
+				MyPawn->IgnoreAttackAnim = true;
+		}
 
 		MyPawn->CurrentState = EAnimationState::E_ATTACK;
 	}
