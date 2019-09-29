@@ -15,7 +15,6 @@ UCLASS(config = Game)
 class PROTOTYPEPROJECT_API AAAIController : public AAIController
 {
 	GENERATED_BODY()
-
 public:
 	AAAIController();
 
@@ -27,6 +26,12 @@ public:
 	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn = true);
 	UFUNCTION(BlueprintCallable, Category = Behavior)
 		void FindClosestEnemy();
+
+	UFUNCTION(BlueprintCallable, Category = Behavior)
+		void AttackEnemy();
+
+	class APrototypeProjectCharacter* GetEnemy() const;
+
 private:
 	UPROPERTY(transient)
 		UBlackboardComponent* BlackboardComp;
@@ -34,5 +39,5 @@ private:
 		UBehaviorTreeComponent* BehaviorComp;
 protected:
 	int32 EnemyKeyID;
-
+	int32 AttackCan;
 };

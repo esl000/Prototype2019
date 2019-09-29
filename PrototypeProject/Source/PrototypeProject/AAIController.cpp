@@ -26,6 +26,7 @@ void AAAIController::OnPossess(APawn * InPawn)
 			BlackboardComp->InitializeBlackboard(*Bot->BotBehavior->BlackboardAsset);
 		}
 		EnemyKeyID = BlackboardComp->GetKeyID("Enemy");
+		AttackCan = BlackboardComp->GetKeyID("AttackKey");
 		BehaviorComp->StartTree(*(Bot->BotBehavior));
 	}
 }
@@ -88,4 +89,39 @@ void AAAIController::FindClosestEnemy()
 	{
 		SetEnemy(BestPawn);
 	}
+}
+
+void AAAIController::AttackEnemy()
+{
+	ABotGame* MyBot = Cast<ABotGame>(GetPawn());
+	APrototypeProjectCharacter* Enemy = GetEnemy();
+	bool bCanAttack = false;
+	if (Enemy)
+	{
+		const float Dist = (Enemy->GetActorLocation() - MyBot->GetActorLocation()).Size2D();
+		if (Dist < 150)
+		{
+			bCanAttack = true;
+		}
+	}
+	if (bCanAttack)
+	{
+		BlackboardComp->SetValue<UBlackboardKeyType_Int>(AttackCan, 1);
+		MyBot->PlayMeleeAnim();
+	}
+	else
+	{
+		BlackboardComp->SetValue<UBlackboardKeyType_Int>(AttackCan, 2);
+		MyBot->StopMeleeAnim();
+	}
+}
+
+class APrototypeProjectCharacter * AAAIController::GetEnemy() const
+{
+	if (BlackboardComp)
+	{
+		return Cast<APrototypeProjectCharacter>(BlackboardComp->GetValue<UBlackboardKeyType_Object>(EnemyKeyID));
+
+	}
+	return NULL;
 }
