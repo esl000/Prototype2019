@@ -4,12 +4,23 @@
 #include "BotGame.h"
 
 
+void ABotGame::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	if (!IsMovable && GetCharacterMovement()->Velocity.SizeSquared() < 5.f)
+	{
+		IsMovable = true;
+		GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
+	}
+}
+
 ABotGame::ABotGame()
 {
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollsionSphere"));
 	CollisionSphere->InitSphereRadius(10.0f);
 
 	bUseControllerRotationYaw = true;
+	IsMovable = true;
 }
 void ABotGame::NotifyActorBeginOverlap(AActor * OtherActor)
 {
