@@ -4,10 +4,12 @@
 
 #include "EngineMinimal.h"
 #include "PublicCharater.h"
+#include "MyActor.h"
+#include "EngineUtils.h"
 #include "BotGame.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PROTOTYPEPROJECT_API ABotGame : public APublicCharater
@@ -31,4 +33,15 @@ public:
 	virtual void FaceRotation(FRotator NewControlRotation, float DeltaTime = 0.f) override;
 	UPROPERTY(EditAnywhere, Category = Behavior)
 		class UBehaviorTree* BotBehavior;
+	void PlayMeleeAnim();
+	void StopMeleeAnim();
+	virtual void Tick(float DeltaTime) override;
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = Pawn)
+		UAnimMontage* MeleeAnim;
+
+private:
+	FTimerHandle TimerHandle_EnemyStopAttack;
+
+	bool DuringAttack;
 };
