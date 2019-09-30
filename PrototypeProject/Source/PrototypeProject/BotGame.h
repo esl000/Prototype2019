@@ -35,7 +35,6 @@ public:
 		class UBehaviorTree* BotBehavior;
 	void PlayMeleeAnim();
 	void StopMeleeAnim();
-	virtual void Tick(float DeltaTime) override;
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = Pawn)
 		UAnimMontage* MeleeAnim;
