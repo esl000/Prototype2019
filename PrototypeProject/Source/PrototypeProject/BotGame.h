@@ -28,12 +28,12 @@ public:
 	void PlayMeleeAnim();
 	void StopMeleeAnim();
 	virtual void Tick(float DeltaTime) override;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = Pawn)
 		UAnimMontage* MeleeAnim;
 
 private:
 	FTimerHandle TimerHandle_EnemyStopAttack;
-
 	bool DuringAttack;
 };

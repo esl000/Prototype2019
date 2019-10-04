@@ -18,7 +18,7 @@ public:
 		int DestoryCount = 0;
 
 	UFUNCTION(BlueprintCallable, Category = Check1)
-		void PlusDestory();
+	 int GETDC();
 
 protected:
 	// Called when the game starts or when spawned
