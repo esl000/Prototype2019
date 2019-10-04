@@ -58,6 +58,9 @@ public:
 	void Attack();
 	UFUNCTION(BlueprintCallable)
 	void Charge();
+	UFUNCTION(BlueprintImplementableEvent)
+	void ApplyCameraShake(float value);
+
 
 private:
 

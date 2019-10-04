@@ -13,6 +13,7 @@
 #include "Engine/World.h"
 #include "PrototypeProject.h"
 #include "DummyAICharacter.h"
+#include "BotGame.h"
 
 APrototypeProjectCharacter::APrototypeProjectCharacter()
 {
@@ -199,15 +200,15 @@ void APrototypeProjectCharacter::Attack()
 	{
 		for (int i = 0; i < result.Num(); ++i)
 		{
-			ADummyAICharacter* character = Cast<ADummyAICharacter>(result[i].GetActor());
+			ABotGame* character = Cast<ABotGame>(result[i].GetActor());
 			if (character == nullptr)
 				return;
 
-			character->HitCount++;
+			if(character->HitCount < 10)
+				character->HitCount++;
 			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 
-			UE_LOG(LogPrototypeProject, Warning, TEXT("%f, %f, %f"), particleDir.X, particleDir.Y,
-				particleDir.Z);
+			ApplyCameraShake(0.3f);
 
 			GetWorld()->SpawnActor<AActor>(Particle, 
 				result[i].ImpactPoint,
@@ -234,7 +235,7 @@ void APrototypeProjectCharacter::Charge()
 	{
 		for (int i = 0; i < result.Num(); ++i)
 		{
-			ADummyAICharacter* character = Cast<ADummyAICharacter>(result[i].GetActor());
+			ABotGame* character = Cast<ABotGame>(result[i].GetActor());
 			if (character == nullptr)
 				return;
 
@@ -242,10 +243,14 @@ void APrototypeProjectCharacter::Charge()
 			if (movement == nullptr)
 				return;
 
+			movement->SetMovementMode(MOVE_Walking);
 			movement->StopActiveMovement();
 			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-			movement->Velocity += particleDir * PushingPower * character->HitCount;
+			movement->Velocity = particleDir * PushingPower * character->HitCount;
 			character->HitCount = 0;
+			character->IsMovable = false;
+
+			ApplyCameraShake(1.f);
 
 			GetWorld()->SpawnActor<AActor>(Particle,
 				result[i].ImpactPoint,

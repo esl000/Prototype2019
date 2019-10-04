@@ -17,6 +17,14 @@ class PROTOTYPEPROJECT_API ABotGame : public APublicCharater
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
+		int HitCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
+		bool IsMovable;
+
+	virtual void Tick(float DeltaTime) override;
+
 	ABotGame();
 	UPROPERTY(VisibleAnywhere, Category = "Collision")
 		class USphereComponent* CollisionSphere;
@@ -27,7 +35,6 @@ public:
 		class UBehaviorTree* BotBehavior;
 	void PlayMeleeAnim();
 	void StopMeleeAnim();
-	virtual void Tick(float DeltaTime) override;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = Pawn)
