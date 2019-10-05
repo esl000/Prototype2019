@@ -6,6 +6,28 @@
 #include "GameFramework/Character.h"
 #include "PublicCharater.generated.h"
 
+USTRUCT(Atomic, BlueprintType)
+struct PROTOTYPEPROJECT_API FCharacterStat
+{
+	GENERATED_USTRUCT_BODY()
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float MaxHp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float Hp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	int32 MaxStack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	int32 Stack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	bool IsMovable;
+};
+
 UCLASS()
 class PROTOTYPEPROJECT_API APublicCharater : public ACharacter
 {
@@ -14,6 +36,9 @@ class PROTOTYPEPROJECT_API APublicCharater : public ACharacter
 public:
 	// Sets default values for this character's properties
 	APublicCharater();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	FCharacterStat Stat;
 
 protected:
 	// Called when the game starts or when spawned

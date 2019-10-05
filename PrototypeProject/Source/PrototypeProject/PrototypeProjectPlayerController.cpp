@@ -31,9 +31,10 @@ void APrototypeProjectPlayerController::SetupInputComponent()
 	// set up gameplay key bindings
 	Super::SetupInputComponent();
 
-	InputComponent->BindAction("SetDestination", IE_Pressed, this, &APrototypeProjectPlayerController::OnSetDestinationPressed);
+	InputComponent->BindAction("SetDestination", IE_Pressed, this, &APrototypeProjectPlayerController::BasicAttack);
 	InputComponent->BindAction("Charging", IE_Pressed, this, &APrototypeProjectPlayerController::ChargingAttack);
 	InputComponent->BindAction("SetDestination", IE_Released, this, &APrototypeProjectPlayerController::OnSetDestinationReleased);
+	InputComponent->BindAction("Dash", IE_Pressed, this, &APrototypeProjectPlayerController::StartDash);
 
 	InputComponent->BindAxis("MoveForward", this, &APrototypeProjectPlayerController::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &APrototypeProjectPlayerController::MoveRight);
@@ -109,7 +110,10 @@ void APrototypeProjectPlayerController::ChargingAttack()
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		if (MyPawn->CurrentState == EAnimationState::E_HIT || MyPawn->CurrentState == EAnimationState::E_ATTACK)
+		if (MyPawn->CurrentState == EAnimationState::E_HIT
+			|| MyPawn->CurrentState == EAnimationState::E_ATTACK
+			|| MyPawn->CurrentState == EAnimationState::E_DASH
+			|| MyPawn->CurrentState == EAnimationState::E_SKILL)
 			return;
 
 		if (MyPawn->CurrentState != EAnimationState::E_CHARGING)
@@ -119,14 +123,17 @@ void APrototypeProjectPlayerController::ChargingAttack()
 	}
 }
 
-void APrototypeProjectPlayerController::OnSetDestinationPressed()
+void APrototypeProjectPlayerController::BasicAttack()
 {
 	// set flag to keep updating destination until released
 	bMoveToMouseCursor = true;
 
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		if (MyPawn->CurrentState == EAnimationState::E_HIT || MyPawn->CurrentState == EAnimationState::E_CHARGING)
+		if (MyPawn->CurrentState == EAnimationState::E_HIT 
+			|| MyPawn->CurrentState == EAnimationState::E_CHARGING
+			|| MyPawn->CurrentState == EAnimationState::E_DASH
+			|| MyPawn->CurrentState == EAnimationState::E_SKILL)
 			return;
 
 		if (MyPawn->CurrentState != EAnimationState::E_ATTACK)
@@ -151,11 +158,24 @@ void APrototypeProjectPlayerController::OnSetDestinationReleased()
 	bMoveToMouseCursor = false;
 }
 
+void APrototypeProjectPlayerController::StartDash()
+{
+	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
+	{
+		if (MyPawn->CurrentState != EAnimationState::E_HIT)
+		{
+			MyPawn->CurrentState = EAnimationState::E_DASH;
+			MyPawn->Dash();
+		}
+	}
+}
+
 void APrototypeProjectPlayerController::MoveForward(float delta)
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		if (MyPawn->CurrentState == EAnimationState::E_IDLE || MyPawn->CurrentState == EAnimationState::E_MOVE)
+		if (MyPawn->CurrentState == EAnimationState::E_IDLE 
+			|| MyPawn->CurrentState == EAnimationState::E_MOVE)
 		{
 			MyPawn->GetCharacterMovement()->AddInputVector(FVector(delta, 0.f, 0.f));
 			MyPawn->CurrentState = EAnimationState::E_MOVE;
@@ -167,7 +187,8 @@ void APrototypeProjectPlayerController::MoveRight(float delta)
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		if (MyPawn->CurrentState == EAnimationState::E_IDLE || MyPawn->CurrentState == EAnimationState::E_MOVE)
+		if (MyPawn->CurrentState == EAnimationState::E_IDLE 
+			|| MyPawn->CurrentState == EAnimationState::E_MOVE)
 		{
 			MyPawn->GetCharacterMovement()->AddInputVector(FVector(0.f, delta, 0.f));
 			MyPawn->CurrentState = EAnimationState::E_MOVE;

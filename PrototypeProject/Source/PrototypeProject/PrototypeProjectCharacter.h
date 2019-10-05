@@ -3,21 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "PublicCharater.h"
 #include "PrototypeProjectCharacter.generated.h"
 
 UENUM(Blueprintable)
 enum class EAnimationState : uint8 
 {
 	E_ATTACK,
+	E_DASH,
 	E_CHARGING,
+	E_SKILL,
 	E_MOVE,
 	E_IDLE,
 	E_HIT
 };
 
 UCLASS(Blueprintable)
-class APrototypeProjectCharacter : public ACharacter
+class APrototypeProjectCharacter : public APublicCharater
 {
 	GENERATED_BODY()
 
@@ -34,6 +36,18 @@ public:
 	float SpineRotationYaw;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
 	EAnimationState CurrentState;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
+	float WarkSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
+	float DashSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
+	float DashAcceletor;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
+	float CurrentDashSpeed;
+
+	FVector DashDirection;
+
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effects)
 	TSubclassOf<AActor> Particle;
@@ -58,6 +72,15 @@ public:
 	void Attack();
 	UFUNCTION(BlueprintCallable)
 	void Charge();
+	UFUNCTION(BlueprintCallable)
+	void UltimateSkill();
+	UFUNCTION(BlueprintCallable)
+	void Dash();
+	UFUNCTION(BlueprintCallable)
+	void EndDash();
+	UFUNCTION(BlueprintCallable)
+	void RotateSight();
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ApplyCameraShake(float value);
 

@@ -38,8 +38,10 @@ protected:
 	void ChargingAttack();
 
 	/** Input handlers for SetDestination action. */
-	void OnSetDestinationPressed();
+	void BasicAttack();
 	void OnSetDestinationReleased();
+
+	void StartDash();
 
 	void MoveForward(float delta);
 	void MoveRight(float delta);

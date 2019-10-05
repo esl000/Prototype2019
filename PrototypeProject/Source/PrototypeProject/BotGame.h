@@ -17,11 +17,6 @@ class PROTOTYPEPROJECT_API ABotGame : public APublicCharater
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
-		int HitCount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
-		bool IsMovable;
 
 	virtual void Tick(float DeltaTime) override;
 

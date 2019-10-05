@@ -71,6 +71,10 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 
 	CurrentAttackCount = 0;
 	IgnoreAttackAnim = false;
+
+	WarkSpeed = 600.0f;
+	DashSpeed = 1800.f;
+	DashAcceletor = 1400.f;
 }
 
 void APrototypeProjectCharacter::Tick(float DeltaSeconds)
@@ -106,80 +110,20 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 		}
 	}
 
-	float focusYaw = LookDirection.ToOrientationRotator().Yaw;
-	float RotationYaw = GetActorRotation().Yaw;
 
-	if (focusYaw < 0.f)
-		focusYaw += 360.f;
-
-	if (focusYaw < RotationYaw)
-		focusYaw += 360.f;
-
-	if (focusYaw > RotationYaw + 180.f)
+	if (CurrentState != EAnimationState::E_DASH)
 	{
-		focusYaw = focusYaw - 360.f;
-	}
-
-	focusYaw -= RotationYaw;
-
-
-	if (RotationYaw < 0.f)
-		RotationYaw += 360.f;
-
-
-
-	float destYaw = DestLookDirection.ToOrientationRotator().Yaw;
-
-	if (destYaw < 0.f)
-		destYaw += 360.f;
-
-	if (destYaw < RotationYaw)
-		destYaw += 360.f;
-
-	if (destYaw > RotationYaw + 180.f)
-	{
-		destYaw = destYaw - 360.f;
-	}
-
-	destYaw -= RotationYaw;
-
-
-
-	focusYaw = FMath::Lerp(focusYaw, destYaw, 3.f * DeltaSeconds);
-	float worldDestYaw = focusYaw + RotationYaw;
-	LookDirection = FRotator(0.f, worldDestYaw, 0.f).Vector();
-
-	if (FMath::Abs(focusYaw) > 90.f)
-	{
-		FocusYaw = (focusYaw / FMath::Abs(focusYaw)) * 90.f;
-		SpineRotationYaw = (focusYaw / FMath::Abs(focusYaw)) * (FMath::Abs(focusYaw) - 90.f);
+		RotateSight();
 	}
 	else
 	{
-		FocusYaw = focusYaw;
+		FocusYaw = 0.f;
 		SpineRotationYaw = 0.f;
+
+		CurrentDashSpeed -= DashAcceletor * DeltaSeconds;
+		GetCharacterMovement()->MaxWalkSpeed = CurrentDashSpeed;
+		AddMovementInput(DashDirection, 1.f);
 	}
-
-
-	//FRotator focus = LookDirection.ToOrientationRotator();
-
-	//LookDirection = FMath::RInterpTo(focus, DestLookDirection.ToOrientationRotator(), DeltaSeconds, 3.f).Vector();
-	////FMath::RInterp
-
-	//FRotator delta = focus - GetActorRotation();
-	//float rotationHalf = 360.f - GetActorRotation().Yaw;
-	//float deltaYaw = /*deltaYaw = delta.Yaw > rotationHalf ? delta.Yaw - 360.f : */delta.Yaw;
-
-	//if (FMath::Abs(deltaYaw) > 90.f)
-	//{
-	//	FocusYaw = (deltaYaw / FMath::Abs(deltaYaw)) * 90.f;
-	//	SpineRotationYaw = (deltaYaw / FMath::Abs(deltaYaw)) * (FMath::Abs(deltaYaw) - 90.f);
-	//}
-	//else
-	//{
-	//	FocusYaw = deltaYaw;
-	//	SpineRotationYaw = 0.f;
-	//}
 }
 
 void APrototypeProjectCharacter::Attack()
@@ -204,8 +148,8 @@ void APrototypeProjectCharacter::Attack()
 			if (character == nullptr)
 				return;
 
-			if(character->HitCount < 10)
-				character->HitCount++;
+			if(character->Stat.Stack < character->Stat.MaxStack)
+				character->Stat.Stack++;
 			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 
 			ApplyCameraShake(0.3f);
@@ -246,9 +190,9 @@ void APrototypeProjectCharacter::Charge()
 			movement->SetMovementMode(MOVE_Walking);
 			movement->StopActiveMovement();
 			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-			movement->Velocity = particleDir * PushingPower * character->HitCount;
-			character->HitCount = 0;
-			character->IsMovable = false;
+			movement->Velocity = particleDir * PushingPower * character->Stat.Stack;
+			character->Stat.Stack = 0;
+			character->Stat.IsMovable = false;
 
 			ApplyCameraShake(1.f);
 
@@ -256,5 +200,79 @@ void APrototypeProjectCharacter::Charge()
 				result[i].ImpactPoint,
 				particleDir.ToOrientationRotator());
 		}
+	}
+}
+
+void APrototypeProjectCharacter::UltimateSkill()
+{
+}
+
+void APrototypeProjectCharacter::Dash()
+{
+	CurrentDashSpeed = DashSpeed;
+	DashDirection = DestLookDirection;
+	GetCharacterMovement()->MaxWalkSpeed = CurrentDashSpeed;
+}
+
+void APrototypeProjectCharacter::EndDash()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WarkSpeed;
+	CurrentState = EAnimationState::E_IDLE;
+}
+
+void APrototypeProjectCharacter::RotateSight()
+{
+	float focusYaw = LookDirection.ToOrientationRotator().Yaw;
+	float RotationYaw = GetActorRotation().Yaw;
+
+	if (focusYaw < 0.f)
+		focusYaw += 360.f;
+
+	if (focusYaw < RotationYaw)
+		focusYaw += 360.f;
+
+	if (focusYaw > RotationYaw + 180.f)
+	{
+		focusYaw = focusYaw - 360.f;
+	}
+
+	focusYaw -= RotationYaw;
+
+
+	if (RotationYaw < 0.f)
+		RotationYaw += 360.f;
+
+
+
+	float destYaw = DestLookDirection.ToOrientationRotator().Yaw;
+
+	if (destYaw < 0.f)
+		destYaw += 360.f;
+
+	if (destYaw < RotationYaw)
+		destYaw += 360.f;
+
+	if (destYaw > RotationYaw + 180.f)
+	{
+		destYaw = destYaw - 360.f;
+	}
+
+	destYaw -= RotationYaw;
+
+
+
+	focusYaw = FMath::Lerp(focusYaw, destYaw, 3.f * GetWorld()->GetDeltaSeconds());
+	float worldDestYaw = focusYaw + RotationYaw;
+	LookDirection = FRotator(0.f, worldDestYaw, 0.f).Vector();
+
+	if (FMath::Abs(focusYaw) > 90.f)
+	{
+		FocusYaw = (focusYaw / FMath::Abs(focusYaw)) * 90.f;
+		SpineRotationYaw = (focusYaw / FMath::Abs(focusYaw)) * (FMath::Abs(focusYaw) - 90.f);
+	}
+	else
+	{
+		FocusYaw = focusYaw;
+		SpineRotationYaw = 0.f;
 	}
 }
