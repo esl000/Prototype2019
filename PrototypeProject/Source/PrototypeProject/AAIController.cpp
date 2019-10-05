@@ -116,6 +116,8 @@ void AAAIController::AttackEnemy()
 	}
 }
 
+
+
 class APrototypeProjectCharacter * AAAIController::GetEnemy() const
 {
 	if (BlackboardComp)
@@ -125,3 +127,4 @@ class APrototypeProjectCharacter * AAAIController::GetEnemy() const
 	}
 	return NULL;
 }
+

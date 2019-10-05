@@ -29,7 +29,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = Behavior)
 		void AttackEnemy();
-
 	class APrototypeProjectCharacter* GetEnemy() const;
 
 private:

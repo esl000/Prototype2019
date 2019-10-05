@@ -30,12 +30,12 @@ public:
 		class UBehaviorTree* BotBehavior;
 	void PlayMeleeAnim();
 	void StopMeleeAnim();
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = Pawn)
 		UAnimMontage* MeleeAnim;
 
 private:
 	FTimerHandle TimerHandle_EnemyStopAttack;
-
 	bool DuringAttack;
 };

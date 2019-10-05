@@ -19,9 +19,9 @@ AMyActor::AMyActor()
 
 
 
-void AMyActor::PlusDestory()
+int AMyActor::GETDC()
 {
-	DestoryCount++;
+	return DestoryCount;
 }
 
 // Called when the game starts or when spawned
@@ -43,7 +43,6 @@ void AMyActor::Tick(float DeltaTime)
 	// 잡은 AI의 수가 몇마리 이상이면 다음 레벨로 이동.
 	if (DestoryCount >= 2)
 	{
-		UGameplayStatics::OpenLevel(this, "stage2");
 	}
 	Super::Tick(DeltaTime);
 
