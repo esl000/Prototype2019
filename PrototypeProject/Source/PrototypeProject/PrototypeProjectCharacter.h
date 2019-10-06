@@ -45,8 +45,31 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
 	float CurrentDashSpeed;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float AttackCoolTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float ChargeCoolTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float SkillCoolTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float DashCoolTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float CurrentAttackCoolTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float CurrentChargeCoolTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float CurrentSkillCoolTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float CurrentDashCoolTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = UI)
+	TSubclassOf<class UUserWidget> InGameUIClass;
+
 	FVector DashDirection;
 
+	UPROPERTY()
+	class UInGameUI* InGameUIInstance;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effects)
@@ -57,6 +80,8 @@ public:
 	int CurrentAttackCount;
 	UPROPERTY(BlueprintReadWrite, Category = Stat)
 	bool IgnoreAttackAnim;
+
+	virtual void BeginPlay() override;
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;

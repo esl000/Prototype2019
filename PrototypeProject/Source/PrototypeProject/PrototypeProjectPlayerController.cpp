@@ -116,9 +116,13 @@ void APrototypeProjectPlayerController::ChargingAttack()
 			|| MyPawn->CurrentState == EAnimationState::E_SKILL)
 			return;
 
+		if (MyPawn->CurrentChargeCoolTime > 0.00001f)
+			return;
+
 		if (MyPawn->CurrentState != EAnimationState::E_CHARGING)
 			MyPawn->SetActorRotation(MyPawn->DestLookDirection.ToOrientationRotator());
 
+		MyPawn->CurrentChargeCoolTime = MyPawn->ChargeCoolTime;
 		MyPawn->CurrentState = EAnimationState::E_CHARGING;
 	}
 }
@@ -136,6 +140,9 @@ void APrototypeProjectPlayerController::BasicAttack()
 			|| MyPawn->CurrentState == EAnimationState::E_SKILL)
 			return;
 
+		if (MyPawn->CurrentAttackCoolTime > 0.00001f)
+			return;
+
 		if (MyPawn->CurrentState != EAnimationState::E_ATTACK)
 		{
 			MyPawn->SetActorRotation(MyPawn->DestLookDirection.ToOrientationRotator());
@@ -148,6 +155,7 @@ void APrototypeProjectPlayerController::BasicAttack()
 				MyPawn->IgnoreAttackAnim = true;
 		}
 
+		MyPawn->CurrentAttackCoolTime = MyPawn->AttackCoolTime;
 		MyPawn->CurrentState = EAnimationState::E_ATTACK;
 	}
 }
@@ -162,10 +170,11 @@ void APrototypeProjectPlayerController::StartDash()
 {
 	if (APrototypeProjectCharacter* MyPawn = Cast<APrototypeProjectCharacter>(GetPawn()))
 	{
-		if (MyPawn->CurrentState != EAnimationState::E_HIT)
+		if (MyPawn->CurrentState != EAnimationState::E_HIT && MyPawn->CurrentDashCoolTime < 0.00001f)
 		{
 			MyPawn->CurrentState = EAnimationState::E_DASH;
 			MyPawn->Dash();
+			MyPawn->CurrentDashCoolTime = MyPawn->DashCoolTime;
 		}
 	}
 }

@@ -14,6 +14,8 @@
 #include "PrototypeProject.h"
 #include "DummyAICharacter.h"
 #include "BotGame.h"
+#include "Blueprint/UserWidget.h"
+#include "InGameUI.h"
 
 APrototypeProjectCharacter::APrototypeProjectCharacter()
 {
@@ -60,7 +62,7 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 
-	PushingPower = 10.f;
+	PushingPower = 2000.f;
 
 	LookDirection = FVector::ForwardVector;
 	DestLookDirection = FVector::ForwardVector;
@@ -75,6 +77,24 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	WarkSpeed = 600.0f;
 	DashSpeed = 1800.f;
 	DashAcceletor = 1400.f;
+
+	AttackCoolTime = 0.3f;
+	ChargeCoolTime = 3.f;
+	SkillCoolTime = 10.f;
+	DashCoolTime = 3.f;
+
+	CurrentAttackCoolTime = 0.f;
+	CurrentChargeCoolTime = 0.f;
+	CurrentSkillCoolTime = 0.f;
+	CurrentDashCoolTime = 0.f;
+}
+
+void APrototypeProjectCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	InGameUIInstance = CreateWidget<UInGameUI>(Cast<APlayerController>(GetController()), InGameUIClass);
+	InGameUIInstance->Player = this;
+	InGameUIInstance->AddToViewport();
 }
 
 void APrototypeProjectCharacter::Tick(float DeltaSeconds)
@@ -123,6 +143,30 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 		CurrentDashSpeed -= DashAcceletor * DeltaSeconds;
 		GetCharacterMovement()->MaxWalkSpeed = CurrentDashSpeed;
 		AddMovementInput(DashDirection, 1.f);
+	}
+
+	if (CurrentAttackCoolTime > 0.f)
+	{
+		CurrentAttackCoolTime -= DeltaSeconds;
+		CurrentAttackCoolTime = CurrentAttackCoolTime < 0.f ? 0.f : CurrentAttackCoolTime;
+	}
+
+	if (CurrentChargeCoolTime > 0.f)
+	{
+		CurrentChargeCoolTime -= DeltaSeconds;
+		CurrentChargeCoolTime = CurrentChargeCoolTime < 0.f ? 0.f : CurrentChargeCoolTime;
+	}
+
+	if (CurrentSkillCoolTime > 0.f)
+	{
+		CurrentSkillCoolTime -= DeltaSeconds;
+		CurrentSkillCoolTime = CurrentSkillCoolTime < 0.f ? 0.f : CurrentSkillCoolTime;
+	}
+
+	if (CurrentDashCoolTime > 0.f)
+	{
+		CurrentDashCoolTime -= DeltaSeconds;
+		CurrentDashCoolTime = CurrentDashCoolTime < 0.f ? 0.f : CurrentDashCoolTime;
 	}
 }
 
