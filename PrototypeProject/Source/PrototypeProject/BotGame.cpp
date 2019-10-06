@@ -33,24 +33,25 @@ void ABotGame::FaceRotation(FRotator NewControlRotation, float DeltaTime)
 
 void ABotGame::PlayMeleeAnim()
 {
-	if (!DuringAttack)
-	{
-		DuringAttack = true;
-		float AnimDuration = PlayAnimMontage(MeleeAnim);
-	}
-	float AnimDuration = PlayAnimMontage(MeleeAnim);
+	CurrentState = EAnimationState1::E_ATTACK;
+	//if (!DuringAttack)
+	//{
+	//	DuringAttack = true;
+	//	float AnimDuration = PlayAnimMontage(MeleeAnim);
+	//}
+	//float AnimDuration = PlayAnimMontage(MeleeAnim);
 
-	GetWorldTimerManager().SetTimer(TimerHandle_EnemyStopAttack, this, &ABotGame::StopMeleeAnim, 1, false);
+	//GetWorldTimerManager().SetTimer(TimerHandle_EnemyStopAttack, this, &ABotGame::StopMeleeAnim, 1, false);
 }
 
 void ABotGame::StopMeleeAnim()
 {
-	if (DuringAttack)
+	/*if (DuringAttack)
 	{
 		DuringAttack = false;
 		StopAnimMontage(MeleeAnim);
 	}
-	StopAnimMontage(MeleeAnim);
+	StopAnimMontage(MeleeAnim);*/
 }
 
 void ABotGame::Tick(float DeltaTime)

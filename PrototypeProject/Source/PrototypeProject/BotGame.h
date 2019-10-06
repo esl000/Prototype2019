@@ -11,6 +11,18 @@
 /**
  *
  */
+UENUM(Blueprintable)
+enum class EAnimationState1 : uint8
+{
+	E_ATTACK,
+	E_DASH,
+	E_CHARGING,
+	E_SKILL,
+	E_MOVE,
+	E_IDLE,
+	E_HIT
+};
+
 UCLASS()
 class PROTOTYPEPROJECT_API ABotGame : public APublicCharater
 {
@@ -23,12 +35,15 @@ public:
 	ABotGame();
 	UPROPERTY(VisibleAnywhere, Category = "Collision")
 		class USphereComponent* CollisionSphere;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
+	EAnimationState1 CurrentState;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void FaceRotation(FRotator NewControlRotation, float DeltaTime = 0.f) override;
 	UPROPERTY(EditAnywhere, Category = Behavior)
 		class UBehaviorTree* BotBehavior;
+	UFUNCTION(BlueprintCallable)
 	void PlayMeleeAnim();
+	UFUNCTION(BlueprintCallable)
 	void StopMeleeAnim();
 
 protected:

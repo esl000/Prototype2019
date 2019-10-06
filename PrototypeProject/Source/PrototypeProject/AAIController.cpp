@@ -17,7 +17,7 @@ AAAIController::AAAIController()
 void AAAIController::OnPossess(APawn * InPawn)
 {
 	Super::OnPossess(InPawn);
-
+	UE_LOG(LogTemp, Warning, TEXT("DD"));
 	ABotGame* Bot = Cast<ABotGame>(InPawn);
 	if (Bot && Bot->BotBehavior)
 	{
@@ -112,7 +112,6 @@ void AAAIController::AttackEnemy()
 	else
 	{
 		BlackboardComp->SetValue<UBlackboardKeyType_Int>(AttackCan, 2);
-		MyBot->StopMeleeAnim();
 	}
 }
 

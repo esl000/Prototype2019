@@ -18,6 +18,8 @@ class PROTOTYPEPROJECT_API AAAIController : public AAIController
 public:
 	AAAIController();
 
+
+	UFUNCTION(BlueprintCallable)
 	virtual void OnPossess(APawn* InPawn) override;
 
 
