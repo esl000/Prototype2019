@@ -63,6 +63,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
 	float CurrentDashCoolTime;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	bool bUnlockSkill;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = UI)
 	TSubclassOf<class UUserWidget> InGameUIClass;
 

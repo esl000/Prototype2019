@@ -73,6 +73,7 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 
 	CurrentAttackCount = 0;
 	IgnoreAttackAnim = false;
+	bUnlockSkill = false;
 
 	WarkSpeed = 600.0f;
 	DashSpeed = 1800.f;
