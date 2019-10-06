@@ -25,6 +25,10 @@ public:
 	float ChargePersent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SkillPersent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HPPersent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float StackPersent;
 	
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 };

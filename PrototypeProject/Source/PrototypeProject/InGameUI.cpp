@@ -12,4 +12,6 @@ void UInGameUI::NativeTick(const FGeometry & MyGeometry, float InDeltaTime)
 	ChargePersent = (Player->ChargeCoolTime - Player->CurrentChargeCoolTime) / Player->ChargeCoolTime;
 	DashPersent = (Player->DashCoolTime - Player->CurrentDashCoolTime) / Player->DashCoolTime;
 	SkillPersent = (Player->SkillCoolTime - Player->CurrentSkillCoolTime) / Player->SkillCoolTime;
+	HPPersent = Player->Stat.Hp / Player->Stat.MaxHp;
+	StackPersent = Player->Stat.Stack / (float)Player->Stat.MaxStack;
 }
