@@ -94,6 +94,8 @@ void AAAIController::FindClosestEnemy()
 void AAAIController::AttackEnemy()
 {
 	ABotGame* MyBot = Cast<ABotGame>(GetPawn());
+	if (MyBot->CurrentState == EAnimationState1::E_HIT)
+		return;
 	APrototypeProjectCharacter* Enemy = GetEnemy();
 	bool bCanAttack = false;
 	if (Enemy)

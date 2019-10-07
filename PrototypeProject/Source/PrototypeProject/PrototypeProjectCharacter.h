@@ -26,6 +26,9 @@ class APrototypeProjectCharacter : public APublicCharater
 public:
 	APrototypeProjectCharacter();
 
+	UPROPERTY(VisibleAnywhere, Category = "Collision")
+	class UCapsuleComponent* CollisionCapsule;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
 	float PushingPower;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
@@ -97,6 +100,8 @@ public:
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
 	UFUNCTION(BlueprintCallable)
+	void ColliderCheck(bool toggle);
+	UFUNCTION(BlueprintCallable)
 	void Attack();
 	UFUNCTION(BlueprintCallable)
 	void Charge();
@@ -111,6 +116,11 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ApplyCameraShake(float value);
+
+	UFUNCTION()
+	void OnHitCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 
 private:

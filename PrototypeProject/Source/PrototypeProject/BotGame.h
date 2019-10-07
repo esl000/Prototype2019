@@ -34,17 +34,32 @@ public:
 
 	ABotGame();
 	UPROPERTY(VisibleAnywhere, Category = "Collision")
-		class USphereComponent* CollisionSphere;
+		class UCapsuleComponent* CollisionCapsule;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
 	EAnimationState1 CurrentState;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void FaceRotation(FRotator NewControlRotation, float DeltaTime = 0.f) override;
+	virtual void BeginPlay() override;
 	UPROPERTY(EditAnywhere, Category = Behavior)
 		class UBehaviorTree* BotBehavior;
 	UFUNCTION(BlueprintCallable)
 	void PlayMeleeAnim();
 	UFUNCTION(BlueprintCallable)
 	void StopMeleeAnim();
+
+	UFUNCTION()
+	void OnHitCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintCallable)
+	void Attack();
+	UFUNCTION(BlueprintCallable)
+	void Charge();
+	UFUNCTION(BlueprintCallable)
+	void EndAttack();
+	UFUNCTION(BlueprintCallable)
+	void EndCharge();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = Pawn)

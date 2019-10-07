@@ -49,13 +49,32 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	// Create a decal in the world to show the cursor's location
 	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
 	CursorToWorld->SetupAttachment(RootComponent);
+
 	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(TEXT("Material'/Game/TopDownCPP/Blueprints/M_Cursor_Decal.M_Cursor_Decal'"));
 	if (DecalMaterialAsset.Succeeded())
 	{
 		CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
 	}
+
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(TEXT("SkeletalMesh'/Game/ParagonGreystone/Characters/Heroes/Greystone/Skins/Novaborn/Meshes/Greystone_Novaborn.Greystone_Novaborn'"));
+	if (BodyMesh.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(BodyMesh.Object);
+	}
+
+
 	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
 	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
+
+	CollisionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollsionSphere"));
+	CollisionCapsule->SetCapsuleSize(10.f, 60.f);
+	CollisionCapsule->AttachToComponent(GetMesh(),
+		FAttachmentTransformRules(EAttachmentRule::KeepRelative, false),
+		TEXT("FX_Sword_Bottom"));
+	CollisionCapsule->SetRelativeLocation(FVector(0.f, 0.f, 60.f));
+	CollisionCapsule->SetGenerateOverlapEvents(true);
+	CollisionCapsule->OnComponentBeginOverlap.AddDynamic(this, &APrototypeProjectCharacter::OnHitCollision);
+	CollisionCapsule->SetGenerateOverlapEvents(false);
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -171,6 +190,11 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 	}
 }
 
+void APrototypeProjectCharacter::ColliderCheck(bool toggle)
+{
+	CollisionCapsule->SetGenerateOverlapEvents(toggle);
+}
+
 void APrototypeProjectCharacter::Attack()
 {
 	TArray<FHitResult> result;
@@ -232,9 +256,8 @@ void APrototypeProjectCharacter::Charge()
 			if (movement == nullptr)
 				return;
 
-			movement->SetMovementMode(MOVE_Walking);
-			movement->StopActiveMovement();
 			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+			movement->StopActiveMovement();
 			movement->Velocity = particleDir * PushingPower * character->Stat.Stack;
 			character->Stat.Stack = 0;
 			character->Stat.IsMovable = false;
@@ -257,11 +280,13 @@ void APrototypeProjectCharacter::Dash()
 	CurrentDashSpeed = DashSpeed;
 	DashDirection = DestLookDirection;
 	GetCharacterMovement()->MaxWalkSpeed = CurrentDashSpeed;
+	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 }
 
 void APrototypeProjectCharacter::EndDash()
 {
 	GetCharacterMovement()->MaxWalkSpeed = WarkSpeed;
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	CurrentState = EAnimationState::E_IDLE;
 }
 
@@ -320,4 +345,34 @@ void APrototypeProjectCharacter::RotateSight()
 		FocusYaw = focusYaw;
 		SpineRotationYaw = 0.f;
 	}
+}
+
+void APrototypeProjectCharacter::OnHitCollision(UPrimitiveComponent * OverlappedComp, 
+	AActor * OtherActor, UPrimitiveComponent * OtherComp, 
+	int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	if (OverlappedComp->GetCollisionObjectType() != CollisionCapsule->GetCollisionObjectType())
+		return;
+
+	//UE_LOG(LogPrototypeProject, Warning, TEXT("HIT"));
+
+	if (ABotGame* hitCharacter = Cast<ABotGame>(OtherActor))
+	{
+		if (CurrentState == EAnimationState::E_ATTACK)
+		{
+			hitCharacter->Stat.Stack < hitCharacter->Stat.MaxStack ? hitCharacter->Stat.Stack++ : hitCharacter->Stat.MaxStack;
+		}
+		else if (CurrentState == EAnimationState::E_CHARGING)
+		{
+			FVector particleDir = (hitCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+			hitCharacter->GetCharacterMovement()->Velocity = particleDir * 1000.f * hitCharacter->Stat.Stack;
+			hitCharacter->Stat.Stack = 0;
+			hitCharacter->CurrentState = EAnimationState1::E_HIT;
+		}
+		else if(CurrentState == EAnimationState::E_SKILL)
+		{
+
+		}
+	}
+
 }

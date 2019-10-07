@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EditorUtilityWidget.h"
+#include "BluePrint/UserWidget.h"
 #include "InGameUI.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROTOTYPEPROJECT_API UInGameUI : public UEditorUtilityWidget
+class PROTOTYPEPROJECT_API UInGameUI : public UUserWidget
 {
 	GENERATED_BODY()
 	
