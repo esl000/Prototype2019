@@ -27,7 +27,7 @@ void ATile2::BeginPlay()
 void ATile2::Tick(float DeltaTime)
 {
 	if (!GetWorldTimerManager().IsTimerActive(TimerHandle1))
-		GetWorldTimerManager().SetTimer(TimerHandle1, this, &ATile2::RepeatingFunction, 20.0f, false);
+		GetWorldTimerManager().SetTimer(TimerHandle1, this, &ATile2::RepeatingFunction, 200.0f, false);
 
 	if (b == 1)
 		Shape->SetSimulatePhysics(true);

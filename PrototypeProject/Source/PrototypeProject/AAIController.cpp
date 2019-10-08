@@ -9,9 +9,12 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyAllTypes.h"
 
+FTimerHandle TimerHandle3;
+int e = 0;
 AAAIController::AAAIController()
 {
 	BlackboardComp = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackBoardComp"));
+	e = 0;
 	BrainComponent = BehaviorComp = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorComp"));
 }
 void AAAIController::OnPossess(APawn * InPawn)
@@ -27,6 +30,8 @@ void AAAIController::OnPossess(APawn * InPawn)
 		}
 		EnemyKeyID = BlackboardComp->GetKeyID("Enemy");
 		AttackCan = BlackboardComp->GetKeyID("AttackKey");
+		Cdist = BlackboardComp->GetKeyID("Cdist");
+		dist1 = BlackboardComp->GetKeyID("dist1");
 		BehaviorComp->StartTree(*(Bot->BotBehavior));
 	}
 }
@@ -39,7 +44,6 @@ void AAAIController::SetEnemy(APawn * InPawn)
 		SetFocus(InPawn);
 	}
 }
-
 void AAAIController::UpdateControlRotation(float DeltaTime, bool bUpdatePawn)
 {
 	FVector FocalPoint = GetFocalPoint();
@@ -77,7 +81,6 @@ void AAAIController::FindClosestEnemy()
 		if (TestPawn)
 		{
 			const float DistSq = (TestPawn->GetActorLocation() - MyLocal).SizeSquared();
-
 			if (DistSq < BestDistSq)
 			{
 				BestDistSq = DistSq;
@@ -99,15 +102,24 @@ void AAAIController::AttackEnemy()
 	if (Enemy)
 	{
 		const float Dist = (Enemy->GetActorLocation() - MyBot->GetActorLocation()).Size2D();
+		BlackboardComp->SetValue<UBlackboardKeyType_Float>(dist1, Dist);
 		if (Dist < 150)
 		{
 			bCanAttack = true;
+		}
+		if (Dist < 400 && e == 0)
+		{
+			e = 1;
+			if (!GetWorldTimerManager().IsTimerActive(TimerHandle3))
+			GetWorldTimerManager().SetTimer(TimerHandle3, this, &AAAIController::MoveAccess, 5.0f, false);
 		}
 	}
 	if (bCanAttack)
 	{
 		BlackboardComp->SetValue<UBlackboardKeyType_Int>(AttackCan, 1);
+		BlackboardComp->SetValue<UBlackboardKeyType_Int>(Cdist, 0);
 		MyBot->PlayMeleeAnim();
+		e = 0;
 	}
 	else
 	{
@@ -125,5 +137,11 @@ class APrototypeProjectCharacter * AAAIController::GetEnemy() const
 
 	}
 	return NULL;
+}
+
+void AAAIController::MoveAccess()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle3);
+	BlackboardComp->SetValue<UBlackboardKeyType_Int>(Cdist, 2);
 }
 
