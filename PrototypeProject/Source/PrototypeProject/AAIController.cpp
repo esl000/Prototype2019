@@ -117,8 +117,8 @@ void AAAIController::AttackEnemy()
 	if (bCanAttack)
 	{
 		BlackboardComp->SetValue<UBlackboardKeyType_Int>(AttackCan, 1);
-		BlackboardComp->SetValue<UBlackboardKeyType_Int>(Cdist, 0);
 		MyBot->PlayMeleeAnim();
+		BlackboardComp->SetValue<UBlackboardKeyType_Int>(Cdist, 0);
 		e = 0;
 	}
 	else

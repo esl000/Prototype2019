@@ -21,8 +21,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void OnPossess(APawn* InPawn) override;
-
-
 	void SetEnemy(class APawn* InPawn);
 
 	virtual void UpdateControlRotation(float DeltaTime, bool bUpdatePawn = true);
@@ -42,6 +40,6 @@ private:
 protected:
 	int32 EnemyKeyID;
 	int32 AttackCan;
-	int32 Cdist;
 	float dist1;
+	int32 Cdist;
 };
