@@ -16,16 +16,16 @@
 #include "BotGame.h"
 #include "Blueprint/UserWidget.h"
 #include "InGameUI.h"
+#include "LevelManager.h"
 
 APrototypeProjectCharacter::APrototypeProjectCharacter()
 {
-	// Set size for player capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
+
+	RootComponent->bAbsoluteRotation = true;
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
@@ -37,7 +37,7 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->bAbsoluteRotation = true; // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 800.f;
+	CameraBoom->TargetArmLength = 200.f;
 	CameraBoom->RelativeRotation = FRotator(-60.f, 0.f, 0.f);
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
@@ -56,32 +56,12 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 		CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
 	}
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(TEXT("SkeletalMesh'/Game/ParagonGreystone/Characters/Heroes/Greystone/Skins/Novaborn/Meshes/Greystone_Novaborn.Greystone_Novaborn'"));
-	if (BodyMesh.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(BodyMesh.Object);
-	}
-
-
-	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
+	CursorToWorld->DecalSize = FVector(4.0f, 8.0f, 8.0f);
 	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
-
-	CollisionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollsionSphere"));
-	CollisionCapsule->SetCapsuleSize(10.f, 60.f);
-	CollisionCapsule->AttachToComponent(GetMesh(),
-		FAttachmentTransformRules(EAttachmentRule::KeepRelative, false),
-		TEXT("FX_Sword_Bottom"));
-	CollisionCapsule->SetRelativeLocation(FVector(0.f, 0.f, 60.f));
-	CollisionCapsule->SetGenerateOverlapEvents(true);
-	CollisionCapsule->OnComponentBeginOverlap.AddDynamic(this, &APrototypeProjectCharacter::OnHitCollision);
-	CollisionCapsule->SetGenerateOverlapEvents(false);
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
-
-
-	PushingPower = 2000.f;
 
 	LookDirection = FVector::ForwardVector;
 	DestLookDirection = FVector::ForwardVector;
@@ -91,12 +71,12 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	CurrentState = EAnimationState::E_IDLE;
 
 	CurrentAttackCount = 0;
-	IgnoreAttackAnim = false;
 	bUnlockSkill = false;
+	bUnlockDash = false;
 
-	WarkSpeed = 600.0f;
-	DashSpeed = 1800.f;
-	DashAcceletor = 1400.f;
+	WarkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	DashSpeed = WarkSpeed * 3.f;
+	DashAcceletor = WarkSpeed * 2.f;
 
 	AttackCoolTime = 0.3f;
 	ChargeCoolTime = 3.f;
@@ -107,14 +87,14 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 	CurrentChargeCoolTime = 0.f;
 	CurrentSkillCoolTime = 0.f;
 	CurrentDashCoolTime = 0.f;
+
+	AccelatorSkillPushingPower = 1.5f;
+	Stat.PushingPower = 5000.f;
 }
 
 void APrototypeProjectCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	InGameUIInstance = CreateWidget<UInGameUI>(Cast<APlayerController>(GetController()), InGameUIClass);
-	InGameUIInstance->Player = this;
-	InGameUIInstance->AddToViewport();
 }
 
 void APrototypeProjectCharacter::Tick(float DeltaSeconds)
@@ -188,98 +168,74 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 		CurrentDashCoolTime -= DeltaSeconds;
 		CurrentDashCoolTime = CurrentDashCoolTime < 0.f ? 0.f : CurrentDashCoolTime;
 	}
-}
 
-void APrototypeProjectCharacter::ColliderCheck(bool toggle)
-{
-	CollisionCapsule->SetGenerateOverlapEvents(toggle);
-}
-
-void APrototypeProjectCharacter::Attack()
-{
-	TArray<FHitResult> result;
-	FCollisionQueryParams params;
-	FCollisionShape shape;
-	shape.ShapeType = ECollisionShape::Type::Box;
-	shape.Box.HalfExtentX = 50.f;
-	shape.Box.HalfExtentY = 50.f;
-	shape.Box.HalfExtentZ = 50.f;
-	params.AddIgnoredActor(this);
-
-
-
-	if (GetWorld()->SweepMultiByChannel(result, GetActorLocation(), GetActorLocation() + 200.f * GetActorForwardVector(), FQuat::Identity,
-		ECollisionChannel::ECC_Pawn, shape, params))
+	if (GetActorLocation().Z <= -200.0f)
 	{
-		for (int i = 0; i < result.Num(); ++i)
-		{
-			ABotGame* character = Cast<ABotGame>(result[i].GetActor());
-			if (character == nullptr)
-				return;
+		SetActorLocation(FVector::ZeroVector);
+		ALevelManager::GetInstance()->PrevRetryGame();
+		return;
+	}
 
-			if(character->Stat.Stack < character->Stat.MaxStack)
-				character->Stat.Stack++;
-			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-
-			ApplyCameraShake(0.3f);
-
-			GetWorld()->SpawnActor<AActor>(Particle, 
-				result[i].ImpactPoint,
-				particleDir.ToOrientationRotator());
-		}
+	if (GetController() != nullptr && (CurrentState == EAnimationState::E_ATTACK ||
+		CurrentState == EAnimationState::E_CHARGING ||
+		CurrentState == EAnimationState::E_SKILL))
+	{
+		GetController()->SetControlRotation(DestLookDirection.ToOrientationRotator());
+	}
+	else
+	{
+		GetController()->SetControlRotation(GetVelocity().ToOrientationRotator());
 	}
 }
 
-void APrototypeProjectCharacter::Charge()
+void APrototypeProjectCharacter::ToggleInputComponent(bool isEnable)
 {
-	TArray<FHitResult> result;
-	FCollisionQueryParams params;
-	FCollisionShape shape;
-	shape.ShapeType = ECollisionShape::Type::Box;
-	shape.Box.HalfExtentX = 50.f;
-	shape.Box.HalfExtentY = 50.f;
-	shape.Box.HalfExtentZ = 50.f;
-	params.AddIgnoredActor(this);
+	if (!InputComponent.IsValid())
+		return;
 
-
-
-	if (GetWorld()->SweepMultiByChannel(result, GetActorLocation(), GetActorLocation() + 200.f * GetActorForwardVector(), FQuat::Identity,
-		ECollisionChannel::ECC_Pawn, shape, params))
+	if (APlayerController* pc = Cast<APlayerController>(GetController()))
 	{
-		for (int i = 0; i < result.Num(); ++i)
-		{
-			ABotGame* character = Cast<ABotGame>(result[i].GetActor());
-			if (character == nullptr)
-				return;
-
-			UCharacterMovementComponent* movement = Cast<UCharacterMovementComponent>(character->GetComponentByClass(UCharacterMovementComponent::StaticClass()));
-			if (movement == nullptr)
-				return;
-
-			FVector particleDir = (character->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-			movement->StopActiveMovement();
-			movement->Velocity = particleDir * PushingPower * character->Stat.Stack;
-			character->Stat.Stack = 0;
-			character->Stat.IsMovable = false;
-
-			ApplyCameraShake(1.f);
-
-			GetWorld()->SpawnActor<AActor>(Particle,
-				result[i].ImpactPoint,
-				particleDir.ToOrientationRotator());
-		}
+		if(isEnable)
+			pc->PushInputComponent(InputComponent.Get());
+		else
+			pc->PopInputComponent(InputComponent.Get());
 	}
+}
+
+void APrototypeProjectCharacter::CheckEndAttack(int count)
+{
+	if (count < CurrentAttackCount)
+		return;
+
+	CurrentAttackCoolTime = AttackCoolTime;
+	CurrentAttackCount = 0;
+	EndMotion();
 }
 
 void APrototypeProjectCharacter::UltimateSkill()
 {
+	if (CurrentState == EAnimationState::E_HIT
+		|| CurrentState == EAnimationState::E_ATTACK
+		|| CurrentState == EAnimationState::E_DASH
+		|| CurrentState == EAnimationState::E_CHARGING)
+		return;
+
+	if (CurrentSkillCoolTime > 0.00001f)
+		return;
+
+	if (CurrentState != EAnimationState::E_SKILL)
+		SetActorRotation(DestLookDirection.ToOrientationRotator());
+
+	CurrentSkillCoolTime = SkillCoolTime;
+	CurrentState = EAnimationState::E_SKILL;
 }
 
 void APrototypeProjectCharacter::Dash()
 {
 	CurrentDashSpeed = DashSpeed;
-	DashDirection = DestLookDirection;
+	DashDirection = GetActorForwardVector();
 	GetCharacterMovement()->MaxWalkSpeed = CurrentDashSpeed;
+	GetCharacterMovement()->Velocity = DashDirection * CurrentDashSpeed * GetWorld()->DeltaTimeSeconds;
 	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 }
 
@@ -354,25 +310,189 @@ void APrototypeProjectCharacter::OnHitCollision(UPrimitiveComponent * Overlapped
 	if (OverlappedComp->GetCollisionObjectType() != CollisionCapsule->GetCollisionObjectType())
 		return;
 
-	//UE_LOG(LogPrototypeProject, Warning, TEXT("HIT"));
-
 	if (ABotGame* hitCharacter = Cast<ABotGame>(OtherActor))
 	{
 		if (CurrentState == EAnimationState::E_ATTACK)
 		{
 			hitCharacter->Stat.Stack < hitCharacter->Stat.MaxStack ? hitCharacter->Stat.Stack++ : hitCharacter->Stat.MaxStack;
+			ApplyCameraShake(0.3f);
+			PlayEffect(hitCharacter);
 		}
 		else if (CurrentState == EAnimationState::E_CHARGING)
 		{
+			if (hitCharacter->CurrentState == EAnimationState::E_HIT)
+				return;
+
+			hitCharacter->GetCharacterMovement()->StopActiveMovement();
 			FVector particleDir = (hitCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-			hitCharacter->GetCharacterMovement()->Velocity = particleDir * 1000.f * hitCharacter->Stat.Stack;
+			hitCharacter->GetCharacterMovement()->Velocity = particleDir * Stat.PushingPower * hitCharacter->Stat.Stack;
 			hitCharacter->Stat.Stack = 0;
-			hitCharacter->CurrentState = EAnimationState1::E_HIT;
+			hitCharacter->CurrentState = EAnimationState::E_HIT;
+			ApplyCameraShake(0.7f);
+			PlayEffect(hitCharacter);
 		}
 		else if(CurrentState == EAnimationState::E_SKILL)
 		{
+			if (hitCharacter->CurrentState == EAnimationState::E_HIT)
+				return;
 
+			hitCharacter->GetCharacterMovement()->StopActiveMovement();
+			FVector particleDir = (hitCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+			hitCharacter->GetCharacterMovement()->Velocity = particleDir * AccelatorSkillPushingPower * Stat.PushingPower * hitCharacter->Stat.Stack;
+			hitCharacter->Stat.Stack = 0;
+			hitCharacter->CurrentState = EAnimationState::E_HIT;
+			ApplyCameraShake(1.f);
+			PlayEffect(hitCharacter);
 		}
 	}
 
+}
+
+void APrototypeProjectCharacter::SetupPlayerInputComponent(UInputComponent * PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	InputComponent = PlayerInputComponent;
+
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &APrototypeProjectCharacter::BasicAttack);
+	PlayerInputComponent->BindAction("Charging", IE_Pressed, this, &APrototypeProjectCharacter::ChargingAttack);
+	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &APrototypeProjectCharacter::StartDash);
+	PlayerInputComponent->BindAction("Skill", IE_Pressed, this, &APrototypeProjectCharacter::UseSkill);
+	PlayerInputComponent->BindAxis("MoveForward", this, &APrototypeProjectCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &APrototypeProjectCharacter::MoveRight);
+}
+
+void APrototypeProjectCharacter::PossessedBy(AController * newController)
+{
+	if (APlayerController* pc = Cast<APlayerController>(newController))
+	{
+		if (InGameUIInstance != nullptr)
+			InGameUIInstance->AddToViewport();
+		else
+		{
+			InGameUIInstance = CreateWidget<UInGameUI>(pc, InGameUIClass);
+			InGameUIInstance->Player = this;
+			InGameUIInstance->AddToViewport();
+		}
+
+		InGameUIInstance->Show(ALevelManager::GetInstance()->CurrentStage);
+		GetCharacterMovement()->GravityScale = 1.f;
+		Stat.Hp = Stat.MaxHp;
+		Stat.Stack = 0;
+
+		CurrentAttackCount = 0.f;
+		CurrentChargeCoolTime = 0.f;
+		CurrentDashCoolTime = 0.f;
+		CurrentSkillCoolTime = 0.f;
+		SetActorTickEnabled(true);
+	}
+}
+
+void APrototypeProjectCharacter::UnPossessed()
+{
+	Super::UnPossessed();
+	GetCharacterMovement()->GravityScale = 0.f;
+	SetActorTickEnabled(false);
+	if (InGameUIInstance != nullptr)
+		InGameUIInstance->RemoveFromViewport();
+}
+
+void APrototypeProjectCharacter::StartDash()
+{
+	if (CurrentState != EAnimationState::E_HIT && CurrentDashCoolTime < 0.00001f)
+	{
+		CurrentState = EAnimationState::E_DASH;
+		CurrentDashSpeed = DashSpeed;
+		DashDirection = GetActorForwardVector();
+		GetCharacterMovement()->MaxWalkSpeed = CurrentDashSpeed;
+		GetCapsuleComponent()->SetGenerateOverlapEvents(false);
+		CurrentDashCoolTime = DashCoolTime;
+	}
+}
+
+void APrototypeProjectCharacter::MoveForward(float delta)
+{
+	if (CurrentState == EAnimationState::E_IDLE
+		|| CurrentState == EAnimationState::E_MOVE)
+	{
+		GetCharacterMovement()->AddInputVector(FVector(delta, 0.f, 0.f));
+		CurrentState = EAnimationState::E_MOVE;
+	}
+}
+
+void APrototypeProjectCharacter::MoveRight(float delta)
+{
+	if (CurrentState == EAnimationState::E_IDLE
+		|| CurrentState == EAnimationState::E_MOVE)
+	{
+		GetCharacterMovement()->AddInputVector(FVector(0.f, delta, 0.f));
+		CurrentState = EAnimationState::E_MOVE;
+	}
+}
+
+void APrototypeProjectCharacter::BasicAttack()
+{
+	if (CurrentState == EAnimationState::E_HIT
+		|| CurrentState == EAnimationState::E_CHARGING
+		|| CurrentState == EAnimationState::E_DASH
+		|| CurrentState == EAnimationState::E_SKILL)
+		return;
+
+	if (CurrentAttackCoolTime > 0.00001f)
+		return;
+
+	if (CurrentState != EAnimationState::E_ATTACK)
+	{
+		//SetActorRotation(DestLookDirection.ToOrientationRotator());
+		CurrentAttackCount = 1;
+	}
+	else
+	{
+		if (CurrentAttackCount < 3)
+			CurrentAttackCount++;				
+	}
+
+	CurrentState = EAnimationState::E_ATTACK;
+}
+
+void APrototypeProjectCharacter::ChargingAttack()
+{
+	if (CurrentState == EAnimationState::E_HIT
+		|| CurrentState == EAnimationState::E_ATTACK
+		|| CurrentState == EAnimationState::E_DASH
+		|| CurrentState == EAnimationState::E_SKILL)
+		return;
+
+	if (CurrentChargeCoolTime > 0.00001f)
+		return;
+
+	//if (CurrentState != EAnimationState::E_CHARGING)
+		//SetActorRotation(DestLookDirection.ToOrientationRotator());
+
+	CurrentChargeCoolTime = ChargeCoolTime;
+	CurrentState = EAnimationState::E_CHARGING;
+}
+
+void APrototypeProjectCharacter::UseSkill()
+{
+	if (CurrentState == EAnimationState::E_HIT
+		|| CurrentState == EAnimationState::E_ATTACK
+		|| CurrentState == EAnimationState::E_DASH
+		|| CurrentState == EAnimationState::E_SKILL)
+		return;
+
+	if (CurrentSkillCoolTime > 0.00001f)
+		return;
+
+	//if (CurrentState != EAnimationState::E_SKILL)
+		//SetActorRotation(DestLookDirection.ToOrientationRotator());
+
+	CurrentSkillCoolTime = SkillCoolTime;
+	CurrentState = EAnimationState::E_SKILL;
+}
+
+void APrototypeProjectCharacter::Hit()
+{
+	ApplyCameraShake(1.f);
+	GetCharacterMovement()->MaxWalkSpeed = WarkSpeed;
+	CurrentState = EAnimationState::E_HIT;
 }

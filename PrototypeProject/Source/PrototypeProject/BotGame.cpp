@@ -3,37 +3,18 @@
 #include "AAIController.h"
 #include "PrototypeProjectCharacter.h"
 #include "PrototypeProject.h"
-//#include "Components/CapsuleComponent.h"
 
 
 
 ABotGame::ABotGame()
 {
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMesh(TEXT("SkeletalMesh'/Game/ParagonGreystone/Characters/Heroes/Greystone/Skins/Novaborn/Meshes/Greystone_Novaborn.Greystone_Novaborn'"));
-	if (BodyMesh.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(BodyMesh.Object);
-	}
 
 	GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
-
-	CollisionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollsionSphere"));
-	CollisionCapsule->SetCapsuleSize(10.f, 60.f);
-	CollisionCapsule->AttachToComponent(GetMesh(),
-		FAttachmentTransformRules(EAttachmentRule::KeepRelative, false),
-		TEXT("FX_Sword_Bottom"));
-	CollisionCapsule->SetRelativeLocation(FVector(0.f, 0.f, 60.f));
-	CollisionCapsule->SetGenerateOverlapEvents(true);
-	CollisionCapsule->OnComponentBeginOverlap.AddDynamic(this, &ABotGame::OnHitCollision);
-	CollisionCapsule->SetGenerateOverlapEvents(false);
 	bUseControllerRotationYaw = true;
 	DuringAttack = false;
 	AIControllerClass = AAAIController::StaticClass();
-}
 
-void ABotGame::NotifyActorBeginOverlap(AActor * OtherActor)
-{
-	Super::NotifyActorBeginOverlap(OtherActor);
+	Stat.PushingPower = 2000.f;
 }
 
 void ABotGame::FaceRotation(FRotator NewControlRotation, float DeltaTime)
@@ -52,28 +33,10 @@ void ABotGame::PlayMeleeAnim()
 	if (APrototypeProjectCharacter* character = Cast<APrototypeProjectCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn()))
 	{
 		if(character->Stat.Stack > character->Stat.MaxStack * 0.6f)
-			CurrentState = EAnimationState1::E_CHARGING;
+			CurrentState = EAnimationState::E_CHARGING;
 		else
-			CurrentState = EAnimationState1::E_ATTACK;
+			CurrentState = EAnimationState::E_ATTACK;
 	}
-	//if (!DuringAttack)
-	//{
-	//	DuringAttack = true;
-	//	float AnimDuration = PlayAnimMontage(MeleeAnim);
-	//}
-	//float AnimDuration = PlayAnimMontage(MeleeAnim);
-
-	//GetWorldTimerManager().SetTimer(TimerHandle_EnemyStopAttack, this, &ABotGame::StopMeleeAnim, 1, false);
-}
-
-void ABotGame::StopMeleeAnim()
-{
-	/*if (DuringAttack)
-	{
-		DuringAttack = false;
-		StopAnimMontage(MeleeAnim);
-	}
-	StopAnimMontage(MeleeAnim);*/
 }
 
 void ABotGame::OnHitCollision(UPrimitiveComponent * OverlappedComp, 
@@ -88,55 +51,33 @@ void ABotGame::OnHitCollision(UPrimitiveComponent * OverlappedComp,
 
 	if (APrototypeProjectCharacter* hitCharacter = Cast<APrototypeProjectCharacter>(OtherActor))
 	{
-		if (CurrentState == EAnimationState1::E_ATTACK)
+		if (CurrentState == EAnimationState::E_ATTACK)
 		{
 			hitCharacter->Stat.Stack < hitCharacter->Stat.MaxStack ? hitCharacter->Stat.Stack++ : hitCharacter->Stat.MaxStack;
+			hitCharacter->ApplyCameraShake(0.15f);
+			PlayEffect(hitCharacter);
 		}
-		else if (CurrentState == EAnimationState1::E_CHARGING)
+		else if (CurrentState == EAnimationState::E_CHARGING)
 		{
+			if (hitCharacter->CurrentState == EAnimationState::E_HIT)
+				return;
+
 			FVector particleDir = (hitCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-			hitCharacter->GetCharacterMovement()->Velocity = particleDir * 1000.f * hitCharacter->Stat.Stack;
+			hitCharacter->GetCharacterMovement()->Velocity = particleDir * Stat.PushingPower * hitCharacter->Stat.Stack;
 			hitCharacter->Stat.Stack = 0;
 			hitCharacter->CurrentState = EAnimationState::E_HIT;
+			hitCharacter->ApplyCameraShake(0.35f);
+			PlayEffect(hitCharacter);
 		}
 	}
-}
-
-void ABotGame::Attack()
-{
-	CollisionCapsule->SetGenerateOverlapEvents(true);
-}
-
-void ABotGame::Charge()
-{
-	CollisionCapsule->SetGenerateOverlapEvents(true);
-
-}
-
-void ABotGame::EndAttack()
-{
-	CollisionCapsule->SetGenerateOverlapEvents(false);
-}
-
-void ABotGame::EndCharge()
-{
-	CollisionCapsule->SetGenerateOverlapEvents(false);
 }
 
 void ABotGame::Tick(float DeltaTime)
 {
+	Super::Tick(DeltaTime);
 	// AI가 장외로 떨어지면 카운트 ++ 위치 : MyActor.cpp
 	if (GetActorLocation().Z <= -200.0f)
 	{
 		Destroy(this);
-		for (TActorIterator<AActor> It(GetWorld()); It; ++It)
-		{
-			AActor* Actor = *It;
-			if (Actor->GetName() == "MyActor_1")
-			{
-				Actor->Tick(1);
-			}
-		}
 	}
-	Super::Tick(DeltaTime);
 }

@@ -26,14 +26,14 @@ void ATile2::BeginPlay()
 // Called every frame
 void ATile2::Tick(float DeltaTime)
 {
+	Super::Tick(DeltaTime);
 	if (!GetWorldTimerManager().IsTimerActive(TimerHandle1))
-		GetWorldTimerManager().SetTimer(TimerHandle1, this, &ATile2::RepeatingFunction, 20.0f, false);
+		GetWorldTimerManager().SetTimer(TimerHandle1, this, &ATile2::RepeatingFunction, 40.0f, false);
 
 	if (b == 1)
 		Shape->SetSimulatePhysics(true);
 	if (GetActorLocation().Z <= -2000.0f)
 		Destroy(this);
-	Super::Tick(DeltaTime);
 
 }
 

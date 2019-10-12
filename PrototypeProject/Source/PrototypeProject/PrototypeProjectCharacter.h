@@ -6,18 +6,6 @@
 #include "PublicCharater.h"
 #include "PrototypeProjectCharacter.generated.h"
 
-UENUM(Blueprintable)
-enum class EAnimationState : uint8 
-{
-	E_ATTACK,
-	E_DASH,
-	E_CHARGING,
-	E_SKILL,
-	E_MOVE,
-	E_IDLE,
-	E_HIT
-};
-
 UCLASS(Blueprintable)
 class APrototypeProjectCharacter : public APublicCharater
 {
@@ -26,19 +14,12 @@ class APrototypeProjectCharacter : public APublicCharater
 public:
 	APrototypeProjectCharacter();
 
-	UPROPERTY(VisibleAnywhere, Category = "Collision")
-	class UCapsuleComponent* CollisionCapsule;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat)
-	float PushingPower;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
 	FVector LookDirection;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
 	float FocusYaw;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = View)
 	float SpineRotationYaw;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
-	EAnimationState CurrentState;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
 	float WarkSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
@@ -67,7 +48,12 @@ public:
 	float CurrentDashCoolTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float AccelatorSkillPushingPower;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
 	bool bUnlockSkill;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	bool bUnlockDash;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = UI)
 	TSubclassOf<class UUserWidget> InGameUIClass;
@@ -83,9 +69,8 @@ public:
 
 	FVector DestLookDirection;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	int CurrentAttackCount;
-	UPROPERTY(BlueprintReadWrite, Category = Stat)
-	bool IgnoreAttackAnim;
 
 	virtual void BeginPlay() override;
 
@@ -99,12 +84,12 @@ public:
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
+
+	TWeakObjectPtr<class UInputComponent> InputComponent;
+	void ToggleInputComponent(bool isEnable);
+
 	UFUNCTION(BlueprintCallable)
-	void ColliderCheck(bool toggle);
-	UFUNCTION(BlueprintCallable)
-	void Attack();
-	UFUNCTION(BlueprintCallable)
-	void Charge();
+	void CheckEndAttack(int count);
 	UFUNCTION(BlueprintCallable)
 	void UltimateSkill();
 	UFUNCTION(BlueprintCallable)
@@ -117,14 +102,24 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ApplyCameraShake(float value);
 
-	UFUNCTION()
-	void OnHitCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	virtual void OnHitCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 			UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void PossessedBy(AController* newController) override;
+	virtual void UnPossessed() override;
 
 private:
 
+	void StartDash();
+	void MoveForward(float delta);
+	void MoveRight(float delta);
+	void BasicAttack();
+	void ChargingAttack();
+	void UseSkill();
+	void Hit();
 
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

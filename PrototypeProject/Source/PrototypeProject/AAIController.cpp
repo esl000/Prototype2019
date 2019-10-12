@@ -27,6 +27,8 @@ void AAAIController::OnPossess(APawn * InPawn)
 		}
 		EnemyKeyID = BlackboardComp->GetKeyID("Enemy");
 		AttackCan = BlackboardComp->GetKeyID("AttackKey");
+		Cdist = BlackboardComp->GetKeyID("Cdist");
+		dist1 = BlackboardComp->GetKeyID("dist1");
 		BehaviorComp->StartTree(*(Bot->BotBehavior));
 	}
 }
@@ -94,22 +96,31 @@ void AAAIController::FindClosestEnemy()
 void AAAIController::AttackEnemy()
 {
 	ABotGame* MyBot = Cast<ABotGame>(GetPawn());
-	if (MyBot->CurrentState == EAnimationState1::E_HIT)
+	if (MyBot->CurrentState == EAnimationState::E_HIT)
 		return;
 	APrototypeProjectCharacter* Enemy = GetEnemy();
 	bool bCanAttack = false;
 	if (Enemy)
 	{
 		const float Dist = (Enemy->GetActorLocation() - MyBot->GetActorLocation()).Size2D();
-		if (Dist < 150)
+		BlackboardComp->SetValue<UBlackboardKeyType_Float>(dist1, Dist);
+		if (Dist < 36.f)
 		{
 			bCanAttack = true;
+		}
+		if (Dist < 100.f && e == 0)
+		{
+			e = 1;
+			if (!GetWorldTimerManager().IsTimerActive(TimeHandler))
+				GetWorldTimerManager().SetTimer(TimeHandler, this, &AAAIController::MoveAccess, 5.0f, false);
 		}
 	}
 	if (bCanAttack)
 	{
 		BlackboardComp->SetValue<UBlackboardKeyType_Int>(AttackCan, 1);
 		MyBot->PlayMeleeAnim();
+		BlackboardComp->SetValue<UBlackboardKeyType_Int>(Cdist, 0);
+		e = 0;
 	}
 	else
 	{
@@ -127,5 +138,11 @@ class APrototypeProjectCharacter * AAAIController::GetEnemy() const
 
 	}
 	return NULL;
+}
+
+void AAAIController::MoveAccess()
+{
+	GetWorldTimerManager().ClearTimer(TimeHandler);
+	BlackboardComp->SetValue<UBlackboardKeyType_Int>(Cdist, 2);
 }
 

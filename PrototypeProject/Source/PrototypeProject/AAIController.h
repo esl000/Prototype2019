@@ -33,6 +33,7 @@ public:
 		void AttackEnemy();
 	class APrototypeProjectCharacter* GetEnemy() const;
 
+	void MoveAccess();
 private:
 	UPROPERTY(transient)
 		UBlackboardComponent* BlackboardComp;
@@ -41,4 +42,8 @@ private:
 protected:
 	int32 EnemyKeyID;
 	int32 AttackCan;
+	float dist1;
+	int32 Cdist;
+	FTimerHandle TimeHandler;
+	int32 e;
 };

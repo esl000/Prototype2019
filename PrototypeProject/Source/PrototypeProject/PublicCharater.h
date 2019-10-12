@@ -2,9 +2,21 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "EngineMinimal.h"
 #include "GameFramework/Character.h"
 #include "PublicCharater.generated.h"
+
+UENUM(Blueprintable)
+enum class EAnimationState : uint8
+{
+	E_ATTACK,
+	E_DASH,
+	E_CHARGING,
+	E_SKILL,
+	E_MOVE,
+	E_IDLE,
+	E_HIT
+};
 
 USTRUCT(Atomic, BlueprintType)
 struct PROTOTYPEPROJECT_API FCharacterStat
@@ -25,6 +37,9 @@ public:
 	int32 Stack;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float PushingPower;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
 	bool IsMovable;
 };
 
@@ -39,6 +54,18 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
 	FCharacterStat Stat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
+	EAnimationState CurrentState;
+
+	UPROPERTY(VisibleAnywhere, Category = "Collision")
+	class UCapsuleComponent* CollisionCapsule;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	class UStaticMeshComponent* WeaponMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Particle)
+	TSubclassOf<AActor> PaticleActor;
 
 protected:
 	// Called when the game starts or when spawned
@@ -56,4 +83,19 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION()
+	virtual void OnHitCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintCallable)
+	virtual void EnableSwordOverlap(bool isEnable);
+	UFUNCTION(BlueprintCallable)
+	virtual void EndMotion();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void PlayEffect(FVector loc, FRotator rot = FRotator::ZeroRotator);
+
+
+	virtual void PlayEffect(APublicCharater* target);
 };

@@ -29,6 +29,9 @@ public:
 	float HPPersent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float StackPersent;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void Show(int currentRound);
 	
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 };
