@@ -64,8 +64,8 @@ public:
 	class UInGameUI* InGameUIInstance;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effects)
-	TSubclassOf<AActor> Particle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectle)
+	TSubclassOf<AActor> SkillProjectle;
 
 	FVector DestLookDirection;
 
@@ -98,6 +98,9 @@ public:
 	void EndDash();
 	UFUNCTION(BlueprintCallable)
 	void RotateSight();
+
+	UFUNCTION(BlueprintCallable)
+	void SetPush(APublicCharater* other, float accelPersent);
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ApplyCameraShake(float value);

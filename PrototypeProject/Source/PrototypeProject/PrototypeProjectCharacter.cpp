@@ -349,6 +349,20 @@ void APrototypeProjectCharacter::OnHitCollision(UPrimitiveComponent * Overlapped
 
 }
 
+void APrototypeProjectCharacter::SetPush(APublicCharater * other, float accelPersent)
+{
+	if (other->CurrentState == EAnimationState::E_HIT)
+		return;
+	other->Damage(Stat.Damage * 2.f);
+	other->GetCharacterMovement()->StopActiveMovement();
+	FVector particleDir = (other->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+	other->GetCharacterMovement()->Velocity = particleDir * AccelatorSkillPushingPower * Stat.PushingPower * other->Stat.Stack;
+	other->Stat.Stack = 0;
+	other->CurrentState = EAnimationState::E_HIT;
+	ApplyCameraShake(1.f);
+	PlayEffect(other);
+}
+
 void APrototypeProjectCharacter::SetupPlayerInputComponent(UInputComponent * PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
