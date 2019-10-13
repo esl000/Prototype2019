@@ -90,6 +90,7 @@ APrototypeProjectCharacter::APrototypeProjectCharacter()
 
 	AccelatorSkillPushingPower = 1.5f;
 	Stat.PushingPower = 5000.f;
+	Stat.Damage = 3.f;
 }
 
 void APrototypeProjectCharacter::BeginPlay()
@@ -171,8 +172,7 @@ void APrototypeProjectCharacter::Tick(float DeltaSeconds)
 
 	if (GetActorLocation().Z <= -200.0f)
 	{
-		SetActorLocation(FVector::ZeroVector);
-		ALevelManager::GetInstance()->PrevRetryGame();
+		Die();
 		return;
 	}
 
@@ -315,6 +315,7 @@ void APrototypeProjectCharacter::OnHitCollision(UPrimitiveComponent * Overlapped
 		if (CurrentState == EAnimationState::E_ATTACK)
 		{
 			hitCharacter->Stat.Stack < hitCharacter->Stat.MaxStack ? hitCharacter->Stat.Stack++ : hitCharacter->Stat.MaxStack;
+			hitCharacter->Damage(Stat.Damage);
 			ApplyCameraShake(0.3f);
 			PlayEffect(hitCharacter);
 		}
@@ -322,7 +323,7 @@ void APrototypeProjectCharacter::OnHitCollision(UPrimitiveComponent * Overlapped
 		{
 			if (hitCharacter->CurrentState == EAnimationState::E_HIT)
 				return;
-
+			hitCharacter->Damage(Stat.Damage * 1.5f);
 			hitCharacter->GetCharacterMovement()->StopActiveMovement();
 			FVector particleDir = (hitCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 			hitCharacter->GetCharacterMovement()->Velocity = particleDir * Stat.PushingPower * hitCharacter->Stat.Stack;
@@ -335,7 +336,7 @@ void APrototypeProjectCharacter::OnHitCollision(UPrimitiveComponent * Overlapped
 		{
 			if (hitCharacter->CurrentState == EAnimationState::E_HIT)
 				return;
-
+			hitCharacter->Damage(Stat.Damage * 2.f);
 			hitCharacter->GetCharacterMovement()->StopActiveMovement();
 			FVector particleDir = (hitCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 			hitCharacter->GetCharacterMovement()->Velocity = particleDir * AccelatorSkillPushingPower * Stat.PushingPower * hitCharacter->Stat.Stack;
@@ -394,6 +395,12 @@ void APrototypeProjectCharacter::UnPossessed()
 	SetActorTickEnabled(false);
 	if (InGameUIInstance != nullptr)
 		InGameUIInstance->RemoveFromViewport();
+}
+
+void APrototypeProjectCharacter::Die()
+{
+	SetActorLocation(FVector::ZeroVector);
+	ALevelManager::GetInstance()->PrevRetryGame();
 }
 
 void APrototypeProjectCharacter::StartDash()

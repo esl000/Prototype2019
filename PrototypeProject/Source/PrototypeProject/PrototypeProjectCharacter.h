@@ -110,6 +110,7 @@ public:
 
 	virtual void PossessedBy(AController* newController) override;
 	virtual void UnPossessed() override;
+	virtual void Die() override;
 
 private:
 

@@ -15,6 +15,7 @@ ABotGame::ABotGame()
 	AIControllerClass = AAAIController::StaticClass();
 
 	Stat.PushingPower = 2000.f;
+	Stat.Damage = 2.f;
 }
 
 void ABotGame::FaceRotation(FRotator NewControlRotation, float DeltaTime)
@@ -39,6 +40,11 @@ void ABotGame::PlayMeleeAnim()
 	}
 }
 
+void ABotGame::Die()
+{
+	Destroy();
+}
+
 void ABotGame::OnHitCollision(UPrimitiveComponent * OverlappedComp, 
 	AActor * OtherActor, UPrimitiveComponent * OtherComp, 
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
@@ -53,6 +59,7 @@ void ABotGame::OnHitCollision(UPrimitiveComponent * OverlappedComp,
 	{
 		if (CurrentState == EAnimationState::E_ATTACK)
 		{
+			hitCharacter->Damage(Stat.Damage);
 			hitCharacter->Stat.Stack < hitCharacter->Stat.MaxStack ? hitCharacter->Stat.Stack++ : hitCharacter->Stat.MaxStack;
 			hitCharacter->ApplyCameraShake(0.15f);
 			PlayEffect(hitCharacter);
@@ -61,7 +68,7 @@ void ABotGame::OnHitCollision(UPrimitiveComponent * OverlappedComp,
 		{
 			if (hitCharacter->CurrentState == EAnimationState::E_HIT)
 				return;
-
+			hitCharacter->Damage(Stat.Damage );
 			FVector particleDir = (hitCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 			hitCharacter->GetCharacterMovement()->Velocity = particleDir * Stat.PushingPower * hitCharacter->Stat.Stack;
 			hitCharacter->Stat.Stack = 0;
@@ -78,6 +85,6 @@ void ABotGame::Tick(float DeltaTime)
 	// AI가 장외로 떨어지면 카운트 ++ 위치 : MyActor.cpp
 	if (GetActorLocation().Z <= -200.0f)
 	{
-		Destroy(this);
+		Die();
 	}
 }

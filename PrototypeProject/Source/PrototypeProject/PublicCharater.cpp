@@ -105,6 +105,20 @@ void APublicCharater::PlayEffect(FVector loc, FRotator rot)
 	GetWorld()->SpawnActor<AActor>(PaticleActor, loc, rot);
 }
 
+void APublicCharater::Damage(float damage)
+{
+	Stat.Hp -= damage;
+	if (Stat.Hp <= 0)
+	{
+		Stat.Hp = 0;
+		Die();
+	}
+}
+
+void APublicCharater::Die()
+{
+}
+
 void APublicCharater::PlayEffect(APublicCharater * target)
 {
 	GetWorld()->SpawnActor<AActor>(PaticleActor, target->GetMesh()->GetSocketLocation(TEXT("Bip001-Spine2")), FRotator::ZeroRotator);

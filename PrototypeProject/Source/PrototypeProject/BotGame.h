@@ -29,6 +29,7 @@ public:
 		class UBehaviorTree* BotBehavior;
 	UFUNCTION(BlueprintCallable)
 	void PlayMeleeAnim();
+	virtual void Die() override;
 
 	virtual void OnHitCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,

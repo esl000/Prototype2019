@@ -40,6 +40,9 @@ public:
 	float PushingPower;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
+	float Damage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat)
 	bool IsMovable;
 };
 
@@ -95,7 +98,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void PlayEffect(FVector loc, FRotator rot = FRotator::ZeroRotator);
-
+	UFUNCTION(BlueprintCallable)
+	virtual void Damage(float damage);
+	UFUNCTION(BlueprintCallable)
+	virtual void Die();
 
 	virtual void PlayEffect(APublicCharater* target);
 };
