@@ -100,7 +100,7 @@ public:
 	void RotateSight();
 
 	UFUNCTION(BlueprintCallable)
-	void SetPush(APublicCharater* other, float accelPersent);
+	void SetPush(APublicCharater* other, FVector pos, float accelPersent);
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ApplyCameraShake(float value);
